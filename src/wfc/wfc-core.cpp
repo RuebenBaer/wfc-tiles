@@ -36,27 +36,30 @@ void drawCell(cell *c, unsigned char* canvas, int width, int height)
 	}
 }
 
-void initTiles(tile *t, int maxTiles)
+void initTiles(tile **t, int maxTiles)
 {
-	t = new tile[maxTiles];
+	tile *tempT = new tile[maxTiles];
 	for (int i = 0; i < maxTiles; i++) {
-		t[i].maxTiles = maxTiles;
-		t[i].optionNorth = new int[maxTiles];
-		t[i].optionSouth = new int[maxTiles];
-		t[i].optionEast = new int[maxTiles];
-		t[i].optionWest = new int[maxTiles];
+		tempT[i].maxTiles = maxTiles;
+		tempT[i].optionNorth = new int[maxTiles];
+		tempT[i].optionSouth = new int[maxTiles];
+		tempT[i].optionEast = new int[maxTiles];
+		tempT[i].optionWest = new int[maxTiles];
 	}
+	*t = tempT;
+	return;
 }
 
-void deleteTiles(tile *t)
+void deleteTiles(tile **t)
 {
-	for (int i = 0; i < t[i].maxTiles; i++) {
-		delete []t[i].optionNorth;
-		delete []t[i].optionSouth;
-		delete []t[i].optionEast;
-		delete []t[i].optionWest;
+	tile *tempT = *t;
+	for (int i = 0; i < tempT[0].maxTiles; i++) {
+		delete []tempT[i].optionNorth;
+		delete []tempT[i].optionSouth;
+		delete []tempT[i].optionEast;
+		delete []tempT[i].optionWest;
 	}
-	delete []t;
+	delete [] (*t);
 }
 
 void findTileOptions(tile *lstTile, int nmbTile)

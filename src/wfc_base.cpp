@@ -59,7 +59,7 @@ MainFrame::~MainFrame()
 {
 	delete []c;
 	if (m_tiles) {
-		deleteTiles(m_tiles);
+		deleteTiles(&m_tiles);
 	}
 }
 
@@ -137,9 +137,10 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 	int imgWidth = imgTemplate.GetWidth();
 	maxTiles = imgWidth / 3;
 	if (m_tiles) {
-		deleteTiles(m_tiles);
+		deleteTiles(&m_tiles);
 	}
-	initTiles(m_tiles, maxTiles);
+	initTiles(&m_tiles, maxTiles);
+	printf("m_tiles: %p\n", (void*)m_tiles);
 	
 	unsigned char* templateData = imgTemplate.GetData();
 	for (int i = 0; i < maxTiles; i++) {
@@ -157,6 +158,7 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 	pos p;
 	p.x = rand() % GRIDSIZE;
 	p.y = rand() % GRIDSIZE;
+	
 	collapseCell(&c[p.x + p.y * GRIDSIZE], curTile, p);
 	drawCell(&c[p.x + p.y * GRIDSIZE], imgCanvas.GetData(), imgCanvas.GetWidth(), imgCanvas.GetHeight());
 

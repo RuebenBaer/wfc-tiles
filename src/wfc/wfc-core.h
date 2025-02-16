@@ -33,8 +33,8 @@ void drawCell(cell *c, unsigned char* canvas, int width, int height);
 
 void findTileOptions(tile *lstTile, int nmbTile);
 void fillTileOptions(tile *lstTile, int ithis, int iother);
-void initTiles(tile *t, int maxTiles);
-void deleteTiles(tile *t);
+void initTiles(tile **t, int maxTiles);
+void deleteTiles(tile **t);
 
 
 #endif /* __WFC_CORE_H_ */
