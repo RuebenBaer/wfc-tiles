@@ -24,7 +24,8 @@ class MainFrame: public wxFrame
 		
 	private:
 		wxImage imgTemplate, imgCanvas;
-		Liste<tile> m_tiles;
+		tile *m_tiles = NULL;
+		int maxTiles;
 		cell *c;
 };
 

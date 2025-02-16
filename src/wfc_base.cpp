@@ -57,8 +57,10 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 MainFrame::~MainFrame()
 {
-	m_tiles.ListeLoeschen("Destructor");
 	delete []c;
+	if (m_tiles) {
+		deleteTiles(m_tiles);
+	}
 }
 
 void MainFrame::OnQuit(wxCommandEvent & WXUNUSED(event))
@@ -133,28 +135,25 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 	imgCanvas = wxImage(GRIDSIZE * 3, GRIDSIZE * 3, true);
 	
 	int imgWidth = imgTemplate.GetWidth();
-	int tileCount = imgWidth / 3;
+	maxTiles = imgWidth / 3;
+	if (m_tiles) {
+		deleteTiles(m_tiles);
+	}
+	initTiles(m_tiles, maxTiles);
+	
 	unsigned char* templateData = imgTemplate.GetData();
-	for (int i = 0; i < tileCount; i++) {
-		tile *t = new tile;
+	for (int i = 0; i < maxTiles; i++) {
 		for (int w = 0; w < 3; w++) {
 			for (int h = 0; h < 3; h++) {
-				t->data[(w + h * 3) * 3 + 0] = templateData[((i * 3 + w) + h * imgWidth) * 3 + 0];
-				t->data[(w + h * 3) * 3 + 1] = templateData[((i * 3 + w) + h * imgWidth) * 3 + 1];
-				t->data[(w + h * 3) * 3 + 2] = templateData[((i * 3 + w) + h * imgWidth) * 3 + 2];
+				m_tiles[i].data[(w + h * 3) * 3 + 0] = templateData[((i * 3 + w) + h * imgWidth) * 3 + 0];
+				m_tiles[i].data[(w + h * 3) * 3 + 1] = templateData[((i * 3 + w) + h * imgWidth) * 3 + 1];
+				m_tiles[i].data[(w + h * 3) * 3 + 2] = templateData[((i * 3 + w) + h * imgWidth) * 3 + 2];
 			}
 		}
-		m_tiles.Hinzufuegen(t);
 	}
 	
-	tile *curTile;
-	int pickedTileNmb = rand() % tileCount;
-	int curTileNmb = 0;
-	for (curTile = m_tiles.GetErstesElement(); curTile != NULL; curTile = m_tiles.GetNaechstesElement()) {
-		if (curTileNmb == pickedTileNmb)
-			break;
-		curTileNmb++;
-	}
+	tile *curTile = &m_tiles[rand() % maxTiles];
+	
 	pos p;
 	p.x = rand() % GRIDSIZE;
 	p.y = rand() % GRIDSIZE;

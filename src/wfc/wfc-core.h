@@ -9,10 +9,11 @@ typedef struct cells cell;
 
 typedef struct tiles {
 	unsigned char data[3*3*3];
-	Liste<tile> optionNorth;
-	Liste<tile> optionEast;
-	Liste<tile> optionSouth;
-	Liste<tile> optionWest;
+	int maxTiles;
+	int *optionNorth;
+	int *optionEast;
+	int *optionSouth;
+	int *optionWest;
 } tile;
 
 typedef struct position {
@@ -29,5 +30,11 @@ typedef struct cells {
 
 void collapseCell(cell *c, tile *t, pos p);
 void drawCell(cell *c, unsigned char* canvas, int width, int height);
+
+void findTileOptions(tile *lstTile, int nmbTile);
+void fillTileOptions(tile *lstTile, int ithis, int iother);
+void initTiles(tile *t, int maxTiles);
+void deleteTiles(tile *t);
+
 
 #endif /* __WFC_CORE_H_ */
