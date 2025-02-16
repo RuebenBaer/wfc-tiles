@@ -3,6 +3,7 @@
 
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>
+#include "wfc\wfc-core.h"
 
 class MainApp: public wxApp
 {
@@ -19,14 +20,18 @@ class MainFrame: public wxFrame
 		void OnSize(wxSizeEvent &event);
 		void OnPaint(wxPaintEvent &event);
 		void OnEreaseBackground(wxEraseEvent &event);
+		void OnOpenTemplate(wxCommandEvent &event);
 		
 	private:
-		
+		wxImage imgTemplate, imgCanvas;
+		Liste<tile> m_tiles;
+		cell *c;
 };
 
 enum
 {
-   ID_MAINWIN_QUIT = wxID_HIGHEST+1
+	ID_MAINWIN_QUIT = wxID_HIGHEST+1,
+    ID_MAINWIN_OPEN_TEMPLATE
 };
 
 
