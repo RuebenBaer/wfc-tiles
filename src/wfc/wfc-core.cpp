@@ -65,9 +65,12 @@ void deleteTiles(tile **t)
 void findTileOptions(tile *lstTile, int nmbTile)
 {
 	for (int ithis = 0; ithis < nmbTile; ithis++) {
+		printf("Option (%d):", ithis);
 		for (int iother = 0; iother < nmbTile; iother++) {
 			fillTileOptions(lstTile, ithis, iother);
+			printf(" %d|%d|%d|%d", lstTile[ithis].optionNorth[iother], lstTile[ithis].optionEast[iother], lstTile[ithis].optionSouth[iother], lstTile[ithis].optionWest[iother]);
 		}
+		printf("\n");
 	}
 	return;
 }

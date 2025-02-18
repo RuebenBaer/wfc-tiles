@@ -140,7 +140,6 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 		deleteTiles(&m_tiles);
 	}
 	initTiles(&m_tiles, maxTiles);
-	printf("m_tiles: %p\n", (void*)m_tiles);
 	
 	unsigned char* templateData = imgTemplate.GetData();
 	for (int i = 0; i < maxTiles; i++) {
@@ -152,6 +151,8 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 			}
 		}
 	}
+	
+	findTileOptions(m_tiles, maxTiles);
 	
 	tile *curTile = &m_tiles[rand() % maxTiles];
 	
