@@ -139,15 +139,15 @@ void fillTileOptions(tile *t_tiles, int thisIndex, int otherIndex)
 	/* optionWest */
 	isOption = 1;
 	for (int h = 0; h < 3; h++) {
-		if (t_tiles[thisIndex].data[(2 + h * 3) * 3 + 0] != t_tiles[otherIndex].data[(0 + h * 3) * 3 + 0]) {
+		if (t_tiles[thisIndex].data[(0 + h * 3) * 3 + 0] != t_tiles[otherIndex].data[(2 + h * 3) * 3 + 0]) {
 			isOption = 0;
 			break;
 		}
-		if (t_tiles[thisIndex].data[(2 + h * 3) * 3 + 1] != t_tiles[otherIndex].data[(0 + h * 3) * 3 + 1]) {
+		if (t_tiles[thisIndex].data[(0 + h * 3) * 3 + 1] != t_tiles[otherIndex].data[(2 + h * 3) * 3 + 1]) {
 			isOption = 0;
 			break;
 		}
-		if (t_tiles[thisIndex].data[(2+ h * 3) * 3 + 2] != t_tiles[otherIndex].data[(0 + h * 3) * 3 + 2]) {
+		if (t_tiles[thisIndex].data[(0 + h * 3) * 3 + 2] != t_tiles[otherIndex].data[(2 + h * 3) * 3 + 2]) {
 			isOption = 0;
 			break;
 		}
