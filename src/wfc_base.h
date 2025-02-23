@@ -5,6 +5,10 @@
 #include <time.h>
 #include "wfc\wfc-core.h"
 
+extern "C" {
+	#include "queue.h"
+}
+
 class MainApp: public wxApp
 {
   public:
