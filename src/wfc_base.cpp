@@ -22,6 +22,21 @@ bool MainApp::OnInit()
 	win->Show(TRUE);
 	SetTopWindow(win);
 	
+	/* int_q_lnk *queue = initQueue();
+	for (int i = 0; i < 5; i++) {
+		for (int k = 5; k > 0; k--){
+			push_to_int_q(i, k, queue);
+		}
+	}
+	int a, b;
+	for (int i = 0; i < 5; i++) {
+		for (int k = 5; k > 0; k--){
+			pop_head_int_q(&a, &b, queue);
+			printf("Head from Queue (%p) %d, %d\n", (void*)(queue), a, b);
+		}
+	}
+	deleteQueue(queue); */
+	
 	return TRUE;
 }
 
@@ -45,7 +60,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	
 	imgCanvas = wxImage(GRIDSIZE * 3, GRIDSIZE * 3, true);
 	
-	c = new cell[GRIDSIZE * GRIDSIZE];
+	c = NULL;
 	
 	srand(time(NULL));
 	
@@ -57,7 +72,9 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 
 MainFrame::~MainFrame()
 {
-	delete []c;
+	if (c) {
+		deleteCells(&c);
+	}
 	if (m_tiles) {
 		deleteTiles(&m_tiles);
 	}
@@ -134,34 +151,21 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 	imgCanvas.Destroy();
 	imgCanvas = wxImage(GRIDSIZE * 3, GRIDSIZE * 3, true);
 	
-	int imgWidth = imgTemplate.GetWidth();
-	maxTiles = imgWidth / 3;
 	if (m_tiles) {
 		deleteTiles(&m_tiles);
+		m_tiles = NULL;
 	}
-	initTiles(&m_tiles, maxTiles);
-	
 	unsigned char* templateData = imgTemplate.GetData();
-	for (int i = 0; i < maxTiles; i++) {
-		for (int w = 0; w < 3; w++) {
-			for (int h = 0; h < 3; h++) {
-				m_tiles[i].data[(w + h * 3) * 3 + 0] = templateData[((i * 3 + w) + h * imgWidth) * 3 + 0];
-				m_tiles[i].data[(w + h * 3) * 3 + 1] = templateData[((i * 3 + w) + h * imgWidth) * 3 + 1];
-				m_tiles[i].data[(w + h * 3) * 3 + 2] = templateData[((i * 3 + w) + h * imgWidth) * 3 + 2];
-			}
-		}
+	unsigned char* canvasData = imgCanvas.GetData();
+	
+	initTiles(&m_tiles, &maxTiles, templateData, imgTemplate.GetWidth(), imgTemplate.GetHeight());
+	if (c != NULL) {
+		deleteCells(&c);
+		printf("Cells = %p\n", (void*)c);
 	}
+	initCells(&c, GRIDSIZE, GRIDSIZE, maxTiles);
 	
-	findTileOptions(m_tiles, maxTiles);
-	
-	tile *curTile = &m_tiles[rand() % maxTiles];
-	
-	pos p;
-	p.x = rand() % GRIDSIZE;
-	p.y = rand() % GRIDSIZE;
-	
-	collapseCell(&c[p.x + p.y * GRIDSIZE], curTile, p);
-	drawCell(&c[p.x + p.y * GRIDSIZE], imgCanvas.GetData(), imgCanvas.GetWidth(), imgCanvas.GetHeight());
+	collapseGrid(c, GRIDSIZE, GRIDSIZE, &m_tiles, &maxTiles, canvasData, imgCanvas.GetWidth(), imgCanvas.GetHeight());
 
     Refresh();
     return;

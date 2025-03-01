@@ -3,9 +3,9 @@
 
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>
-#include "wfc\wfc-core.h"
 
 extern "C" {
+	#include "wfc\wfc-core.h"
 	#include "queue.h"
 }
 
@@ -26,7 +26,7 @@ class MainFrame: public wxFrame
 		void OnEreaseBackground(wxEraseEvent &event);
 		void OnOpenTemplate(wxCommandEvent &event);
 		
-	private:
+	private:		
 		wxImage imgTemplate, imgCanvas;
 		tile *m_tiles;
 		int maxTiles;

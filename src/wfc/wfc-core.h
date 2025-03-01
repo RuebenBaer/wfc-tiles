@@ -1,8 +1,6 @@
 #ifndef __WFC_CORE_H_
 #define __WFC_CORE_H_
 
-#include "..\Liste\Verkettete_Liste.h"
-
 typedef struct tiles tile;
 typedef struct position pos;
 typedef struct cells cell;
@@ -24,17 +22,17 @@ typedef struct cells {
 	int collapsed;
 	int entropy;
 	tile *m_tile;
-	Liste<tile> options;
+	int *options;
+	int maxOptions;
+	int numCells;
 	pos p;
 } cell;
 
-void collapseCell(cell *c, tile *t, pos p);
-void drawCell(cell *c, unsigned char* canvas, int width, int height);
+extern void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsigned char *canvasData, int canvasWidth, int canvasHeight);
+extern void initTiles(tile **t, int *maxTiles, unsigned char *picData, int imgWidth, int imgHeight);
+extern void deleteTiles(tile **t);
 
-void findTileOptions(tile *lstTile, int nmbTile);
-void fillTileOptions(tile *lstTile, int ithis, int iother);
-void initTiles(tile **t, int maxTiles);
-void deleteTiles(tile **t);
-
+extern void initCells(cell **c, int width, int height, int maxTiles);
+extern void deleteCells(cell **c);
 
 #endif /* __WFC_CORE_H_ */

@@ -1,5 +1,5 @@
 CXX = g++
-CPP = clang
+CC = clang
 CPPFLAGS =  \
 	-Wall \
 	-Werror \
@@ -63,11 +63,11 @@ $(OBJDIR)\wfc_base.o: $(SRCDIR)\wfc_base.cpp $(SRCDIR)\wfc_base.h
 	
 $(OBJDIR)\queue.o: $(SRCDIR)\queue.c
 	if not exist $(OBJDIR) mkdir $(OBJDIR)
-	$(CPP) -c $< -o $@
+	$(CC) -c $< -o $@
 
-$(OBJDIR)\wfc\wfc-core.o: $(SRCDIR)\wfc\wfc-core.cpp $(SRCDIR)\wfc\wfc-core.h
+$(OBJDIR)\wfc\wfc-core.o: $(SRCDIR)\wfc\wfc-core.c $(SRCDIR)\wfc\wfc-core.h
 	if not exist $(OBJDIR)\wfc mkdir $(OBJDIR)\wfc
-	$(CXX) $(CPPFLAGS) $(DEFS) $(INCLUDES) -c $< -o $@
+	$(CC) -c $< -o $@
 
 $(OBJDIR)\resource.res: $(SRCDIR)\resource.rc
 	if not exist $(OBJDIR) mkdir $(OBJDIR)

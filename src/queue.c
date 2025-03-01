@@ -1,15 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct integer_queue {
+typedef struct integer_queue_item {
 	int x, y;
-	struct integer_queue *next;
-}int_q;
+	struct integer_queue_item *next;
+} int_q;
 
-int_q *q_head = NULL;
-int_q *q_tail = NULL;
+typedef struct integer_queue_anchor {
+	int_q *q_head;
+	int_q *q_tail;	
+} int_q_lnk;
 
-extern int push_to_int_q (int x, int y)
+extern int push_to_int_q (int x, int y, int_q_lnk *queue)
 {
 	int_q *q_temp = (int_q*) malloc(sizeof(int_q));
 	if (q_temp == NULL) {
@@ -20,30 +22,52 @@ extern int push_to_int_q (int x, int y)
 	q_temp->x = x;
 	q_temp->y = y;
 	
-	if (q_tail == NULL) {
-		q_tail = q_head = q_temp;
+	if (queue->q_tail == NULL) {
+		queue->q_tail = queue->q_head = q_temp;
 		return 1;
 	}
-	q_tail->next = q_temp;
-	q_tail = q_temp;
+	queue->q_tail->next = q_temp;
+	queue->q_tail = q_temp;
 	return 1;
 }
 
-extern int pop_head_int_q (int *x, int *y)
+extern int pop_head_int_q (int *x, int *y, int_q_lnk *queue)
 {
-	if (q_head == NULL) {
+	if (queue->q_head == NULL) {
 		printf("queue is empty\n");
 		return 0;
 	}
-	*x = q_head->x;
-	*y = q_head->y;
-	if (q_head == q_tail) {
-		free(q_head);
-		q_head = q_tail = NULL;
+	*x = queue->q_head->x;
+	*y = queue->q_head->y;
+	if (queue->q_head == queue->q_tail) {
+		free(queue->q_head);
+		queue->q_head = queue->q_tail = NULL;
 		return 1;
 	}
-	int_q *q_temp = q_head;
-	q_head = q_head->next;
+	int_q *q_temp = queue->q_head;
+	queue->q_head = queue->q_head->next;
 	free(q_temp);
 	return 1;
+}
+
+extern int_q_lnk* initQueue(void)
+{
+	int_q_lnk* queue = (int_q_lnk*) malloc(sizeof(int_q_lnk));
+	if (queue) {
+		queue->q_head = NULL;
+		queue->q_tail = NULL;
+		return queue;
+	}
+	return NULL;
+}
+
+extern int deleteQueue(int_q_lnk* queue)
+{
+	int a, b;
+	if (queue) {
+		while (pop_head_int_q(&a, &b, queue)){}
+		free(queue);
+		return 1;
+	}
+	return 0;
 }

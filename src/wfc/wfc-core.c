@@ -1,4 +1,11 @@
 #include "wfc-core.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+void findTileOptions(tile *lstTile, int nmbTile);
+void fillTileOptions(tile *lstTile, int ithis, int iother);
+void collapseCell(cell *c, tile *t, pos p);
+void drawCell(cell *c, unsigned char* canvas, int width, int height);
 
 void initCell(cell *c)
 {
@@ -11,11 +18,10 @@ void collapseCell(cell *c, tile *t, pos p)
 	c->p.x = p.x;
 	c->p.y = p.y;
 	c->collapsed = 1;
-	c->options.ListeLeeren("collapseCell");
 }
 
 void drawCell(cell *c, unsigned char* canvas, int width, int height)
-{
+{	
 	if(c->collapsed == 0) {
 		printf("Cell is not collapsed\n");
 		return;
@@ -34,19 +40,34 @@ void drawCell(cell *c, unsigned char* canvas, int width, int height)
 			canvas[curpos + 2] = t->data[(w + h * 3) * 3 + 2];
 		}
 	}
+	return;
 }
 
-void initTiles(tile **t, int maxTiles)
+void initTiles(tile **t, int *numTiles, unsigned char *picData, int imgWidth, int imgHeight)
 {
-	tile *tempT = new tile[maxTiles];
+	int maxTiles = *numTiles = imgWidth / 3;
+
+	tile *tempT = (tile*) malloc(sizeof(tile) * maxTiles);
 	for (int i = 0; i < maxTiles; i++) {
 		tempT[i].maxTiles = maxTiles;
-		tempT[i].optionNorth = new int[maxTiles];
-		tempT[i].optionSouth = new int[maxTiles];
-		tempT[i].optionEast = new int[maxTiles];
-		tempT[i].optionWest = new int[maxTiles];
+		tempT[i].optionNorth = (int*) malloc(sizeof(int) * maxTiles);
+		tempT[i].optionSouth = (int*) malloc(sizeof(int) * maxTiles);
+		tempT[i].optionEast = (int*) malloc(sizeof(int) * maxTiles);
+		tempT[i].optionWest = (int*) malloc(sizeof(int) * maxTiles);
 	}
 	*t = tempT;
+	
+	for (int i = 0; i < maxTiles; i++) {
+		for (int w = 0; w < 3; w++) {
+			for (int h = 0; h < 3; h++) {
+				(*t)[i].data[(w + h * 3) * 3 + 0] = picData[((i * 3 + w) + h * imgWidth) * 3 + 0];
+				(*t)[i].data[(w + h * 3) * 3 + 1] = picData[((i * 3 + w) + h * imgWidth) * 3 + 1];
+				(*t)[i].data[(w + h * 3) * 3 + 2] = picData[((i * 3 + w) + h * imgWidth) * 3 + 2];
+			}
+		}
+	}
+	
+	findTileOptions(*t, maxTiles);
 	return;
 }
 
@@ -54,12 +75,13 @@ void deleteTiles(tile **t)
 {
 	tile *tempT = *t;
 	for (int i = 0; i < tempT[0].maxTiles; i++) {
-		delete []tempT[i].optionNorth;
-		delete []tempT[i].optionSouth;
-		delete []tempT[i].optionEast;
-		delete []tempT[i].optionWest;
+		free(tempT[i].optionNorth);
+		free(tempT[i].optionSouth);
+		free(tempT[i].optionEast);
+		free(tempT[i].optionWest);
 	}
-	delete [] (*t);
+	free(*t);
+	printf("Tiles deleted\n");
 }
 
 void findTileOptions(tile *lstTile, int nmbTile)
@@ -156,3 +178,57 @@ void fillTileOptions(tile *t_tiles, int thisIndex, int otherIndex)
 	/* END optionWest */
 	return;
 }
+
+void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsigned char *canvasData, int canvasWidth, int canvasHeight)
+{
+	int i = rand() % *maxTiles;
+	printf("maxTiles: %d\n", *maxTiles);
+	tile curTile = (*t)[i];
+	
+	printf("collapse to tile t (%p) =-%d-=> curTile (%p) offset %llu\n", (void*)&t, i, (void*)&curTile, sizeof(tile));
+	
+	pos p;
+	p.x = rand() % sizeX;
+	p.y = rand() % sizeY;
+	
+	collapseCell(&c[p.x + p.y * sizeX], &curTile, p);
+	drawCell(&c[p.x + p.y * sizeX], canvasData, canvasWidth, canvasHeight);
+	return;
+}
+
+void initCells(cell **c, int width, int height, int maxTiles)
+{
+	if (*c != NULL) {
+		deleteCells(c);
+	}
+	*c = (cell*)malloc(sizeof(cell) * width * height);
+	if (*c == NULL) return;
+
+	for (int h = 0; h < height; h++) {
+		for(int w = 0; w < width; w++) {
+			(*c)[w + h * width].collapsed = 0;
+			(*c)[w + h * width].entropy = maxTiles;
+			(*c)[w + h * width].m_tile = NULL;
+			(*c)[w + h * width].maxOptions = maxTiles;
+			(*c)[w + h * width].options = (int*)malloc(sizeof(int) * maxTiles);
+			(*c)[w + h * width].p.x = w;
+			(*c)[w + h * width].p.y = h;
+			(*c)[w + h * width].numCells = width * height;
+		}
+	}
+	return;
+}
+
+void deleteCells(cell **c)
+{
+	if (c == NULL) return;
+	for (int i = 0; i < (*c)[0].numCells; i++) {
+		free((*c)[i].options);
+		(*c)[i].options = NULL;
+	}
+	free(*c);
+	*c = NULL;
+	printf("Cells deleted\n");
+	return;
+}
+
