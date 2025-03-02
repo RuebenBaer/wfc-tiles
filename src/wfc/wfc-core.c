@@ -1,4 +1,5 @@
 #include "wfc-core.h"
+#include "..\queue.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -6,6 +7,7 @@ void findTileOptions(tile *lstTile, int nmbTile);
 void fillTileOptions(tile *lstTile, int ithis, int iother);
 void collapseCell(cell *c, tile *t, pos p);
 void drawCell(cell *c, unsigned char* canvas, int width, int height);
+void reduceNeighbours(cell *c, int curCell, int sizeX, int sizeY, int_q_lnk *queue);
 
 void initCell(cell *c)
 {
@@ -190,9 +192,13 @@ void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsign
 	pos p;
 	p.x = rand() % sizeX;
 	p.y = rand() % sizeY;
+	int curCell = p.x + p.y * sizeX;
+	collapseCell(&c[curCell], &curTile, p);
+	drawCell(&c[curCell], canvasData, canvasWidth, canvasHeight);
 	
-	collapseCell(&c[p.x + p.y * sizeX], &curTile, p);
-	drawCell(&c[p.x + p.y * sizeX], canvasData, canvasWidth, canvasHeight);
+	int_q_lnk *queue = initQueue();
+	reduceNeighbours(c, sizeX, sizeY, curCell, queue);
+	
 	return;
 }
 
@@ -232,3 +238,51 @@ void deleteCells(cell **c)
 	return;
 }
 
+void reduceNeighbours(cell *c, int curCell, int sizeX, int sizeY, int_q_lnk *queue)
+{
+	int curX = c[curCell].p.x;
+	int curY = c[curCell].p.y;
+	int neighX, neighY;
+	int changed = 0;
+	cell *neighbour;
+	
+	for (int n = 0; n < 4; n++) {
+		neighX = curX;
+		neighY = curY;
+		switch (n) {
+			case 0: /* north */
+				if ((neighY = curY - 1) < 0) {
+					printf("neighY < 0\n");
+					continue;
+				}
+				break;
+			case 1: /* east  */
+				if ((neighX = curX + 1) >= sizeX) {
+					printf("neighX >= sizeX\n");
+					continue;
+				}
+				break;
+			case 2: /* south */
+				if ((neighY = curY + 1) >= sizeY) {
+					printf("neighY >= sizeY\n");
+					continue;
+				}
+				break;
+			case 3: /* west  */
+				if ((neighX = curX - 1) < 0) {
+					printf("neighX < 0\n");
+					continue;
+				}
+				break;
+		}
+		neighbour = &c[neighX + neighY * sizeX];
+		for (int opt = 0; opt < neighbour->maxOptions; opt++) {
+			if (neighbour->options[opt] == 1 && c[curCell]->options[opt] == 0) { /* falsch => Vergleich mit optionen der Tiles erforderlich */
+				changed++;
+				entropy--;
+				neighbour->options[opt] = 0;
+			}
+		}
+	}
+	return;
+}

@@ -165,7 +165,7 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 	}
 	initCells(&c, GRIDSIZE, GRIDSIZE, maxTiles);
 	
-	collapseGrid(c, GRIDSIZE, GRIDSIZE, &m_tiles, &maxTiles, canvasData, imgCanvas.GetWidth(), imgCanvas.GetHeight());
+	collapseGrid(&c, GRIDSIZE, GRIDSIZE, &m_tiles, &maxTiles, canvasData, imgCanvas.GetWidth(), imgCanvas.GetHeight());
 
     Refresh();
     return;
