@@ -4,19 +4,23 @@
 
 void findTileOptions(tile *lstTile, int nmbTile);
 void fillTileOptions(tile *lstTile, int ithis, int iother);
-void collapseCell(cell *c, tile *t, pos p);
+void collapseCell(cell *c, tile *t, int tileNmb, pos p);
 void drawCell(cell *c, unsigned char* canvas, int width, int height);
+void reduceNeighbours(cell *c, int x, int y, int sizeX, int sizeY, tile **lstTile);
 
 void initCell(cell *c)
 {
 	c->collapsed = 0;
 }
 
-void collapseCell(cell *c, tile *t, pos p)
+void collapseCell(cell *c, tile *t, int tileNmb, pos p)
 {
 	c->m_tile = t;
 	c->p.x = p.x;
 	c->p.y = p.y;
+	for (int i = 0; i < c->maxOptions; i++) {
+		c->options[i] = (i == tileNmb);
+	}
 	c->collapsed = 1;
 }
 
@@ -191,8 +195,10 @@ void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsign
 	p.x = rand() % sizeX;
 	p.y = rand() % sizeY;
 	
-	collapseCell(&c[p.x + p.y * sizeX], &curTile, p);
+	collapseCell(&c[p.x + p.y * sizeX], &curTile, i, p);
 	drawCell(&c[p.x + p.y * sizeX], canvasData, canvasWidth, canvasHeight);
+	
+	reduceNeighbours(c, p.x, p.y, sizeX, sizeY, t);
 	return;
 }
 
@@ -232,3 +238,7 @@ void deleteCells(cell **c)
 	return;
 }
 
+void reduceNeighbours(cell *c, int x, int y, int sizeX, int sizeY, tile **lstTile)
+{
+	return;
+}
