@@ -240,5 +240,35 @@ void deleteCells(cell **c)
 
 void reduceNeighbours(cell *c, int x, int y, int sizeX, int sizeY, tile **lstTile)
 {
+	int maxOptions = c[0].maxOptions;
+	printf("maxOptions = %d\n", maxOptions);
+	int *locOptionsNorth = (int*)calloc(maxOptions, sizeof(int));
+	int *locOptionsEast = (int*)calloc(maxOptions, sizeof(int));
+	int *locOptionsSouth = (int*)calloc(maxOptions, sizeof(int));
+	int *locOptionsWest = (int*)calloc(maxOptions, sizeof(int));
+	
+	int iCurCell = x + y * sizeX;
+	
+	/* loop every option */
+	for (int opt = 0; opt < maxOptions; opt++) {
+		/* check, if tile no. opt is an option for the cell */
+		if (c[iCurCell].options[opt] != 0) {
+			/* loop over every tileOption */
+			for (int iTileOpt = 0; iTileOpt < maxOptions; iTileOpt++) {
+				if((*lstTile)[opt].optionNorth[iTileOpt] == 1) locOptionsNorth[iTileOpt] = 1;
+				if((*lstTile)[opt].optionEast[iTileOpt] == 1) locOptionsEast[iTileOpt] = 1;
+				if((*lstTile)[opt].optionSouth[iTileOpt] == 1) locOptionsSouth[iTileOpt] = 1;
+				if((*lstTile)[opt].optionWest[iTileOpt] == 1) locOptionsWest[iTileOpt] = 1;
+			}
+		}
+	}
+	
+	
+	
+	
+	free(locOptionsNorth);
+	free(locOptionsEast);
+	free(locOptionsSouth);
+	free(locOptionsWest);
 	return;
 }
