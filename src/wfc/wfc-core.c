@@ -1,4 +1,5 @@
 #include "wfc-core.h"
+#include "..\queue.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -6,7 +7,7 @@ void findTileOptions(tile *lstTile, int nmbTile);
 void fillTileOptions(tile *lstTile, int ithis, int iother);
 void collapseCell(cell *c, tile *t, int tileNmb, pos p);
 void drawCell(cell *c, unsigned char* canvas, int width, int height);
-void reduceNeighbours(cell *c, int x, int y, int sizeX, int sizeY, tile **lstTile);
+void reduceNeighbours(cell *c, int_q_lnk *queue, int sizeX, int sizeY, tile **lstTile);
 
 /* for debugging, remove later */
 void printAllCells(cell *c, int sizeX, int sizeY);
@@ -201,7 +202,17 @@ void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsign
 	collapseCell(&c[p.x + p.y * sizeX], &curTile, i, p);
 	drawCell(&c[p.x + p.y * sizeX], canvasData, canvasWidth, canvasHeight);
 	
-	reduceNeighbours(c, p.x, p.y, sizeX, sizeY, t);
+	int_q_lnk *queue = initQueue();
+	if (!queue) {
+		printf("queue is NULL: %p\n", (void*)queue);
+		return;
+	}
+	if (!push_to_int_q (p.x, p.y, queue)) {
+		printf("couldn't push to queue\n");
+		return;
+	}
+	reduceNeighbours(c, queue, sizeX, sizeY, t);
+	deleteQueue(queue);
 	return;
 }
 
@@ -246,10 +257,16 @@ void deleteCells(cell **c)
 	return;
 }
 
-void reduceNeighbours(cell *c, int x, int y, int sizeX, int sizeY, tile **lstTile)
+void reduceNeighbours(cell *c, int_q_lnk *q, int sizeX, int sizeY, tile **lstTile)
 {
+	printf("Entering reduceNeighbours\n");
+	int x, y;
+	if (!pop_head_int_q(&x, &y, q)) {
+		printf("couldn't pop queue\n\texiting reduceNeighbours\n");
+		return;	
+	}
+	
 	int maxOptions = c[0].maxOptions;
-	printf("maxOptions = %d\n", maxOptions);
 	int *locOptionsNorth = (int*)calloc(maxOptions, sizeof(int));
 	int *locOptionsEast = (int*)calloc(maxOptions, sizeof(int));
 	int *locOptionsSouth = (int*)calloc(maxOptions, sizeof(int));
@@ -272,36 +289,73 @@ void reduceNeighbours(cell *c, int x, int y, int sizeX, int sizeY, tile **lstTil
 	}
 	
 	cell nCell;
+	int newOption;
 	/* to implement: adding changed cells to queue */
 	/* compare to options north*/
+	int changed = 0;
 	if (!(y - 1 < 0)) {
 		nCell = c[x + (y-1) * sizeX];
 		for (int opt = 0; opt < maxOptions; opt++) {
-			nCell.options[opt] = nCell.options[opt] && locOptionsNorth[opt];
+			newOption = nCell.options[opt] && locOptionsNorth[opt];
+			if (nCell.options[opt] != newOption) {
+				changed = 1;
+			}
+			nCell.options[opt] = newOption;
+		}
+		if (changed) {
+			printf("\toptions north changed\n");
+			push_to_int_q (x, y - 1, q);
 		}
 	}
 	
 	/* compare to options east*/
+	changed = 0;
 	if (!(x + 1 >= sizeX)) {
 		nCell = c[(x + 1) + y * sizeX];
 		for (int opt = 0; opt < maxOptions; opt++) {
-			nCell.options[opt] = nCell.options[opt] && locOptionsEast[opt];
+			newOption = nCell.options[opt] && locOptionsEast[opt];
+			if (nCell.options[opt] != newOption) {
+				changed = 1;
+			}
+			nCell.options[opt] = newOption;
+		}
+		if (changed) {
+			printf("\toptions east changed\n");
+			push_to_int_q (x + 1, y, q);
 		}
 	}
 	
 	/* compare to options south*/
+	changed = 0;
 	if (!(y + 1 >= sizeY)) {
 		nCell = c[x + (y + 1) * sizeX];
 		for (int opt = 0; opt < maxOptions; opt++) {
-			nCell.options[opt] = nCell.options[opt] && locOptionsSouth[opt];
+			newOption = nCell.options[opt] && locOptionsSouth[opt];
+			if (nCell.options[opt] != newOption) {
+				changed = 1;
+			}
+			nCell.options[opt] = newOption;
+		}
+		if (changed) {
+			printf("\toptions south changed\n");
+			push_to_int_q (x, y + 1, q);
 		}
 	}
 	
 	/* compare to options west*/
+	changed = 0;
 	if (!(x - 1 < 0)) {
 		nCell = c[(x - 1) + y * sizeX];
 		for (int opt = 0; opt < maxOptions; opt++) {
-			nCell.options[opt] = nCell.options[opt] && locOptionsWest[opt];
+			newOption = nCell.options[opt] && locOptionsWest[opt];
+			if (nCell.options[opt] != newOption) {
+				changed = 1;
+			}
+			nCell.options[opt] = newOption;
+		}
+		if (changed) {
+			printf("\toptions west changed\n");
+			push_to_int_q (x - 1, y, q);
 		}
 	}
 	
@@ -309,6 +363,9 @@ void reduceNeighbours(cell *c, int x, int y, int sizeX, int sizeY, tile **lstTil
 	free(locOptionsEast);
 	free(locOptionsSouth);
 	free(locOptionsWest);
+	
+	reduceNeighbours(c, q, sizeX, sizeY, lstTile);
+	
 	return;
 }
 
