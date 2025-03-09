@@ -8,6 +8,9 @@ void collapseCell(cell *c, tile *t, int tileNmb, pos p);
 void drawCell(cell *c, unsigned char* canvas, int width, int height);
 void reduceNeighbours(cell *c, int x, int y, int sizeX, int sizeY, tile **lstTile);
 
+/* for debugging, remove later */
+void printAllCells(cell *c, int sizeX, int sizeY);
+
 void initCell(cell *c)
 {
 	c->collapsed = 0;
@@ -217,6 +220,11 @@ void initCells(cell **c, int width, int height, int maxTiles)
 			(*c)[w + h * width].m_tile = NULL;
 			(*c)[w + h * width].maxOptions = maxTiles;
 			(*c)[w + h * width].options = (int*)malloc(sizeof(int) * maxTiles);
+			if ((*c)[w + h * width].options != NULL) {
+				for (int i = 0; i < maxTiles; i++) {
+					(*c)[w + h * width].options[i] = 1;
+				}
+			}
 			(*c)[w + h * width].p.x = w;
 			(*c)[w + h * width].p.y = h;
 			(*c)[w + h * width].numCells = width * height;
@@ -263,12 +271,59 @@ void reduceNeighbours(cell *c, int x, int y, int sizeX, int sizeY, tile **lstTil
 		}
 	}
 	
+	cell nCell;
+	/* to implement: adding changed cells to queue */
+	/* compare to options north*/
+	if (!(y - 1 < 0)) {
+		nCell = c[x + (y-1) * sizeX];
+		for (int opt = 0; opt < maxOptions; opt++) {
+			nCell.options[opt] = nCell.options[opt] && locOptionsNorth[opt];
+		}
+	}
 	
+	/* compare to options east*/
+	if (!(x + 1 >= sizeX)) {
+		nCell = c[(x + 1) + y * sizeX];
+		for (int opt = 0; opt < maxOptions; opt++) {
+			nCell.options[opt] = nCell.options[opt] && locOptionsEast[opt];
+		}
+	}
 	
+	/* compare to options south*/
+	if (!(y + 1 >= sizeY)) {
+		nCell = c[x + (y + 1) * sizeX];
+		for (int opt = 0; opt < maxOptions; opt++) {
+			nCell.options[opt] = nCell.options[opt] && locOptionsSouth[opt];
+		}
+	}
+	
+	/* compare to options west*/
+	if (!(x - 1 < 0)) {
+		nCell = c[(x - 1) + y * sizeX];
+		for (int opt = 0; opt < maxOptions; opt++) {
+			nCell.options[opt] = nCell.options[opt] && locOptionsWest[opt];
+		}
+	}
 	
 	free(locOptionsNorth);
 	free(locOptionsEast);
 	free(locOptionsSouth);
 	free(locOptionsWest);
+	return;
+}
+
+void printAllCells(cell *c, int sizeX, int sizeY)
+{
+	int maxOptions = c[0].maxOptions;
+	for (int y = 0; y < sizeY; y++) {
+		for (int x = 0; x < sizeX; x++) {
+			/* printf("c[%2d|%2d]: ", x, y); */
+			for (int opt = 0; opt < maxOptions; opt++) {
+				printf("%d ", c[x + y * sizeX].options[opt]);
+			}
+			printf(" | ");
+		}
+		printf("\n");
+	}
 	return;
 }

@@ -5,7 +5,7 @@
 
 #include "wfc_base.h"
 
-#define GRIDSIZE 10
+#define GRIDSIZE 5
 
 IMPLEMENT_APP(MainApp)
 
