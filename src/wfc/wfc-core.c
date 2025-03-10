@@ -212,6 +212,7 @@ void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsign
 		return;
 	}
 	reduceNeighbours(c, queue, sizeX, sizeY, t);
+	printAllCells(c, sizeX, sizeY);
 	deleteQueue(queue);
 	return;
 }
@@ -376,7 +377,7 @@ void printAllCells(cell *c, int sizeX, int sizeY)
 		for (int x = 0; x < sizeX; x++) {
 			/* printf("c[%2d|%2d]: ", x, y); */
 			for (int opt = 0; opt < maxOptions; opt++) {
-				printf("%d ", c[x + y * sizeX].options[opt]);
+				printf("%d", c[x + y * sizeX].options[opt]);
 			}
 			printf(" | ");
 		}
