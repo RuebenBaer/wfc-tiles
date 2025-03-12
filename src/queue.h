@@ -9,6 +9,7 @@ extern int pop_head_int_q (int *x, int *y, int_q_lnk *queue);
 
 extern int_q_lnk* initQueue(void);
 extern int deleteQueue(int_q_lnk* queue);
+extern int emptyQueue(int_q_lnk* queue);
 
 
 #endif /*  __INT_QUEUE_H */

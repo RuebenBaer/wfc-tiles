@@ -71,3 +71,13 @@ extern int deleteQueue(int_q_lnk* queue)
 	}
 	return 0;
 }
+
+extern int emptyQueue(int_q_lnk* queue)
+{
+	int a, b;
+	if (queue) {
+		while (pop_head_int_q(&a, &b, queue)){}
+		return 1;
+	}
+	return 0;
+}
