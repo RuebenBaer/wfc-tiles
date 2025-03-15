@@ -6,10 +6,11 @@
 
 void findTileOptions(tile *lstTile, int nmbTile);
 void fillTileOptions(tile *lstTile, int ithis, int iother);
-void collapseCell(cell *c, tile *t, int tileNmb, pos p);
+void collapseCell(cell *c, tile *t, int tileNmb, int x, int y);
 void drawCell(cell *c, unsigned char* canvas, int width, int height);
 void reduceNeighbours(cell *c, int_q_lnk *queue, int sizeX, int sizeY, tile **lstTile);
-void selectCellToCollapse(cell *c, int sizeX, int sizeY);
+int selectCellToCollapse(cell *c, int *x, int *y, int sizeX, int sizeY);
+void selectRandomTile(cell *c, int *tileNmb);
 
 /* for debugging, remove later */
 void printAllCells(cell *c, int sizeX, int sizeY);
@@ -19,11 +20,11 @@ void initCell(cell *c)
 	c->collapsed = 0;
 }
 
-void collapseCell(cell *c, tile *t, int tileNmb, pos p)
+void collapseCell(cell *c, tile *t, int tileNmb, int x, int y)
 {
 	c->m_tile = t;
-	c->p.x = p.x;
-	c->p.y = p.y;
+	c->p.x = x;
+	c->p.y = y;
 	for (int i = 0; i < c->maxOptions; i++) {
 		c->options[i] = (i == tileNmb);
 	}
@@ -191,38 +192,41 @@ void fillTileOptions(tile *t_tiles, int thisIndex, int otherIndex)
 
 void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsigned char *canvasData, int canvasWidth, int canvasHeight)
 {
-	int i = rand() % *maxTiles;
-	printf("maxTiles: %d\n", *maxTiles);
-	tile curTile = (*t)[i];
+	int x, y, tileNmb;
+	tile curTile;
 	
-	printf("collapse to tile t (%p) =-%d-=> curTile (%p) offset %llu\n", (void*)&t, i, (void*)&curTile, sizeof(tile));
-	
-	pos p;
-	p.x = rand() % sizeX;
-	p.y = rand() % sizeY;
-	
-	collapseCell(&c[p.x + p.y * sizeX], &curTile, i, p);
-	drawCell(&c[p.x + p.y * sizeX], canvasData, canvasWidth, canvasHeight);
-	
-	int_q_lnk *queue = initQueue();
-	if (!queue) {
-		printf("queue is NULL: %p\n", (void*)queue);
-		return;
-	}
-	if (!push_to_int_q (p.x, p.y, queue)) {
-		printf("couldn't push to queue\n");
-		return;
-	}
-	reduceNeighbours(c, queue, sizeX, sizeY, t);
-	printAllCells(c, sizeX, sizeY);
-	deleteQueue(queue);
-	
-	selectCellToCollapse(c, sizeX, sizeY);
-	
+	do {
+		if (!selectCellToCollapse(c, &x, &y, sizeX, sizeY)) {
+			printf("loop exited\n");
+			break;
+		}
+		selectRandomTile(&c[x + y * sizeX], &tileNmb);
+		if (tileNmb < 0) {
+			printf("tile selection failed\nexiting\n");
+			return;
+		}
+		curTile = (*t)[tileNmb];
+		collapseCell(&c[x + y * sizeX], &curTile, tileNmb, x, y);
+		drawCell(&c[x + y * sizeX], canvasData, canvasWidth, canvasHeight);
+		
+		int_q_lnk *queue = initQueue();
+		if (!queue) {
+			printf("queue is NULL: %p\n", (void*)queue);
+			return;
+		}
+		if (!push_to_int_q (x, y, queue)) {
+			printf("couldn't push to queue\n");
+			return;
+		}
+		reduceNeighbours(c, queue, sizeX, sizeY, t);
+		/* printAllCells(c, sizeX, sizeY); */
+		deleteQueue(queue);
+	}while (1);
+
 	return;
 }
 
-void selectCellToCollapse(cell *c, int sizeX, int sizeY)
+int selectCellToCollapse(cell *c, int *x, int *y, int sizeX, int sizeY)
 {
 	int minEntropy = c[0].maxOptions;
 	int_q_lnk *queue = initQueue();
@@ -237,7 +241,6 @@ void selectCellToCollapse(cell *c, int sizeX, int sizeY)
 					c[x + y * sizeX].entropy += 1;
 				}
 			}
-			printf("Entropy (min): %d (%d), queued cells: %d\n", c[x + y * sizeX].entropy, minEntropy, cellsQueued);
 			if (c[x + y * sizeX].entropy < minEntropy) {
 				emptyQueue(queue);
 				cellsQueued = 1;
@@ -250,16 +253,45 @@ void selectCellToCollapse(cell *c, int sizeX, int sizeY)
 			}
 		}
 	}
+	if (cellsQueued == 0) {
+		return 0;
+	}
 	srand(time(NULL));
 	int pickedCell = rand() % cellsQueued + 1;
 	printf("picked the %d. cell of %d: ", pickedCell, cellsQueued);
-	int x, y;
+
 	while (pickedCell > 0) {
-		pop_head_int_q(&x, &y, queue);
+		pop_head_int_q(x, y, queue);
 		pickedCell--;
 	}
-	printf("%d | %d\n", x, y);
+	printf("%d | %d\n", *x, *y);
 	deleteQueue(queue);
+	return 1;
+}
+
+void selectRandomTile(cell *c, int *tileNmb)
+{
+	srand(time(NULL));
+	c->entropy = 0;
+	for (int opt = 0; opt < c->maxOptions; opt++) {
+		if (c->options[opt] != 0) {
+			c->entropy++;
+		}
+	}
+	*tileNmb = -1;
+	if (c->entropy == 0) {
+		return;
+	}
+	int pick = rand() % c->entropy;
+	for (int opt = 0; opt < c->maxOptions; opt++) {
+		if (c->options[opt] != 0) {
+			if (pick == 0) {
+				*tileNmb = opt;
+				return;
+			}
+			pick--;
+		}
+	}
 	return;
 }
 
