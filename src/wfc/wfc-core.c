@@ -12,6 +12,8 @@ void reduceNeighbours(cell *c, int_q_lnk *queue, int sizeX, int sizeY, tile **ls
 int selectCellToCollapse(cell *c, int *x, int *y, int sizeX, int sizeY);
 void selectRandomTile(cell *c, int *tileNmb);
 
+size_t random;
+
 /* for debugging, remove later */
 void printAllCells(cell *c, int sizeX, int sizeY);
 
@@ -195,6 +197,9 @@ void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsign
 	int x, y, tileNmb;
 	tile curTile;
 	
+	srand(time(0));
+	random = rand();
+	
 	do {
 		if (!selectCellToCollapse(c, &x, &y, sizeX, sizeY)) {
 			printf("loop exited\n");
@@ -256,8 +261,9 @@ int selectCellToCollapse(cell *c, int *x, int *y, int sizeX, int sizeY)
 	if (cellsQueued == 0) {
 		return 0;
 	}
-	srand(time(NULL));
-	int pickedCell = rand() % cellsQueued + 1;
+	srand(random);
+	random = rand();
+	int pickedCell = random % cellsQueued + 1;
 	printf("picked the %d. cell of %d: ", pickedCell, cellsQueued);
 
 	while (pickedCell > 0) {
@@ -271,7 +277,6 @@ int selectCellToCollapse(cell *c, int *x, int *y, int sizeX, int sizeY)
 
 void selectRandomTile(cell *c, int *tileNmb)
 {
-	srand(time(NULL));
 	c->entropy = 0;
 	for (int opt = 0; opt < c->maxOptions; opt++) {
 		if (c->options[opt] != 0) {
@@ -282,7 +287,11 @@ void selectRandomTile(cell *c, int *tileNmb)
 	if (c->entropy == 0) {
 		return;
 	}
-	int pick = rand() % c->entropy;
+	int pick = random = rand();
+	printf("rand() %% entropy => %d %% %d = ", pick, c->entropy);
+	pick = pick % c->entropy;
+	printf("%d\n", pick);
+	
 	for (int opt = 0; opt < c->maxOptions; opt++) {
 		if (c->options[opt] != 0) {
 			if (pick == 0) {

@@ -22,6 +22,8 @@ bool MainApp::OnInit()
 	win->Show(TRUE);
 	SetTopWindow(win);
 	
+	srand(time(NULL));
+	
 	/* int_q_lnk *queue = initQueue();
 	for (int i = 0; i < 5; i++) {
 		for (int k = 5; k > 0; k--){
@@ -61,9 +63,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	imgCanvas = wxImage(GRIDSIZE * 3, GRIDSIZE * 3, true);
 	
 	c = NULL;
-	
-	srand(time(NULL));
-	
+		
 	CreateStatusBar(2);
 	SetStatusText(wxT("Wave function collapse"));
 	

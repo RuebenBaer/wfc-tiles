@@ -34,7 +34,7 @@ extern int push_to_int_q (int x, int y, int_q_lnk *queue)
 extern int pop_head_int_q (int *x, int *y, int_q_lnk *queue)
 {
 	if (queue->q_head == NULL) {
-		printf("queue is empty\n");
+		/* printf("queue is empty\n"); */
 		return 0;
 	}
 	*x = queue->q_head->x;
