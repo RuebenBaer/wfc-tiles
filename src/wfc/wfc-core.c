@@ -239,7 +239,7 @@ int selectCellToCollapse(cell *c, int *x, int *y, int sizeX, int sizeY)
 	/* loop every cell */
 	for (int x = 0; x < sizeX; x++) {
 		for (int y = 0; y < sizeY; y++) {
-			if (c[x + y * sizeX].collapsed) break;
+			if (c[x + y * sizeX].collapsed) continue;
 			c[x + y * sizeX].entropy = 0;
 			for (int opt = 0; opt < c[0].maxOptions; opt++) {
 				if (c[x + y * sizeX].options[opt] != 0) {
