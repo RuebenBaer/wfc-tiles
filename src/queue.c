@@ -34,7 +34,7 @@ extern int push_to_int_q (int x, int y, int_q_lnk *queue)
 extern int pop_head_int_q (int *x, int *y, int_q_lnk *queue)
 {
 	if (queue->q_head == NULL) {
-		printf("queue is empty\n");
+		/* printf("queue is empty\n"); */
 		return 0;
 	}
 	*x = queue->q_head->x;
@@ -67,6 +67,16 @@ extern int deleteQueue(int_q_lnk* queue)
 	if (queue) {
 		while (pop_head_int_q(&a, &b, queue)){}
 		free(queue);
+		return 1;
+	}
+	return 0;
+}
+
+extern int emptyQueue(int_q_lnk* queue)
+{
+	int a, b;
+	if (queue) {
+		while (pop_head_int_q(&a, &b, queue)){}
 		return 1;
 	}
 	return 0;

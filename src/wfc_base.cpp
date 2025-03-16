@@ -5,7 +5,7 @@
 
 #include "wfc_base.h"
 
-#define GRIDSIZE 10
+#define GRIDSIZE 20
 
 IMPLEMENT_APP(MainApp)
 
@@ -21,6 +21,8 @@ bool MainApp::OnInit()
 	SetExitOnFrameDelete(TRUE);
 	win->Show(TRUE);
 	SetTopWindow(win);
+	
+	srand(time(NULL));
 	
 	/* int_q_lnk *queue = initQueue();
 	for (int i = 0; i < 5; i++) {
@@ -61,9 +63,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	imgCanvas = wxImage(GRIDSIZE * 3, GRIDSIZE * 3, true);
 	
 	c = NULL;
-	
-	srand(time(NULL));
-	
+		
 	CreateStatusBar(2);
 	SetStatusText(wxT("Wave function collapse"));
 	

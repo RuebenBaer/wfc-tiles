@@ -1,22 +1,35 @@
 #include "wfc-core.h"
+#include "..\queue.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 
 void findTileOptions(tile *lstTile, int nmbTile);
 void fillTileOptions(tile *lstTile, int ithis, int iother);
-void collapseCell(cell *c, tile *t, pos p);
+void collapseCell(cell *c, tile *t, int tileNmb, int x, int y);
 void drawCell(cell *c, unsigned char* canvas, int width, int height);
+void reduceNeighbours(cell *c, int_q_lnk *queue, int sizeX, int sizeY, tile **lstTile);
+int selectCellToCollapse(cell *c, int *x, int *y, int sizeX, int sizeY);
+void selectRandomTile(cell *c, int *tileNmb);
+
+size_t random;
+
+/* for debugging, remove later */
+void printAllCells(cell *c, int sizeX, int sizeY);
 
 void initCell(cell *c)
 {
 	c->collapsed = 0;
 }
 
-void collapseCell(cell *c, tile *t, pos p)
+void collapseCell(cell *c, tile *t, int tileNmb, int x, int y)
 {
 	c->m_tile = t;
-	c->p.x = p.x;
-	c->p.y = p.y;
+	c->p.x = x;
+	c->p.y = y;
+	for (int i = 0; i < c->maxOptions; i++) {
+		c->options[i] = (i == tileNmb);
+	}
 	c->collapsed = 1;
 }
 
@@ -181,18 +194,113 @@ void fillTileOptions(tile *t_tiles, int thisIndex, int otherIndex)
 
 void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsigned char *canvasData, int canvasWidth, int canvasHeight)
 {
-	int i = rand() % *maxTiles;
-	printf("maxTiles: %d\n", *maxTiles);
-	tile curTile = (*t)[i];
+	int x, y, tileNmb;
+	tile curTile;
 	
-	printf("collapse to tile t (%p) =-%d-=> curTile (%p) offset %llu\n", (void*)&t, i, (void*)&curTile, sizeof(tile));
+	srand(time(0));
+	random = rand();
 	
-	pos p;
-	p.x = rand() % sizeX;
-	p.y = rand() % sizeY;
+	do {
+		if (!selectCellToCollapse(c, &x, &y, sizeX, sizeY)) {
+			printf("loop exited\n");
+			break;
+		}
+		selectRandomTile(&c[x + y * sizeX], &tileNmb);
+		if (tileNmb < 0) {
+			printf("tile selection failed\nexiting\n");
+			return;
+		}
+		curTile = (*t)[tileNmb];
+		collapseCell(&c[x + y * sizeX], &curTile, tileNmb, x, y);
+		drawCell(&c[x + y * sizeX], canvasData, canvasWidth, canvasHeight);
+		
+		int_q_lnk *queue = initQueue();
+		if (!queue) {
+			printf("queue is NULL: %p\n", (void*)queue);
+			return;
+		}
+		if (!push_to_int_q (x, y, queue)) {
+			printf("couldn't push to queue\n");
+			return;
+		}
+		reduceNeighbours(c, queue, sizeX, sizeY, t);
+		/* printAllCells(c, sizeX, sizeY); */
+		deleteQueue(queue);
+	}while (1);
+
+	return;
+}
+
+int selectCellToCollapse(cell *c, int *x, int *y, int sizeX, int sizeY)
+{
+	int minEntropy = c[0].maxOptions;
+	int_q_lnk *queue = initQueue();
+	int cellsQueued = 0;
+	/* loop every cell */
+	for (int x = 0; x < sizeX; x++) {
+		for (int y = 0; y < sizeY; y++) {
+			if (c[x + y * sizeX].collapsed) continue;
+			c[x + y * sizeX].entropy = 0;
+			for (int opt = 0; opt < c[0].maxOptions; opt++) {
+				if (c[x + y * sizeX].options[opt] != 0) {
+					c[x + y * sizeX].entropy += 1;
+				}
+			}
+			if (c[x + y * sizeX].entropy < minEntropy) {
+				emptyQueue(queue);
+				cellsQueued = 1;
+				push_to_int_q(x, y, queue);
+				minEntropy = c[x + y * sizeX].entropy;
+			}
+			else if (c[x + y * sizeX].entropy == minEntropy) {
+				push_to_int_q(x, y, queue);
+				cellsQueued++;
+			}
+		}
+	}
+	if (cellsQueued == 0) {
+		return 0;
+	}
+	srand(random);
+	random = rand();
+	int pickedCell = random % cellsQueued + 1;
+	printf("picked the %d. cell of %d: ", pickedCell, cellsQueued);
+
+	while (pickedCell > 0) {
+		pop_head_int_q(x, y, queue);
+		pickedCell--;
+	}
+	printf("%d | %d\n", *x, *y);
+	deleteQueue(queue);
+	return 1;
+}
+
+void selectRandomTile(cell *c, int *tileNmb)
+{
+	c->entropy = 0;
+	for (int opt = 0; opt < c->maxOptions; opt++) {
+		if (c->options[opt] != 0) {
+			c->entropy++;
+		}
+	}
+	*tileNmb = -1;
+	if (c->entropy == 0) {
+		return;
+	}
+	int pick = random = rand();
+	printf("rand() %% entropy => %d %% %d = ", pick, c->entropy);
+	pick = pick % c->entropy;
+	printf("%d\n", pick);
 	
-	collapseCell(&c[p.x + p.y * sizeX], &curTile, p);
-	drawCell(&c[p.x + p.y * sizeX], canvasData, canvasWidth, canvasHeight);
+	for (int opt = 0; opt < c->maxOptions; opt++) {
+		if (c->options[opt] != 0) {
+			if (pick == 0) {
+				*tileNmb = opt;
+				return;
+			}
+			pick--;
+		}
+	}
 	return;
 }
 
@@ -211,6 +319,11 @@ void initCells(cell **c, int width, int height, int maxTiles)
 			(*c)[w + h * width].m_tile = NULL;
 			(*c)[w + h * width].maxOptions = maxTiles;
 			(*c)[w + h * width].options = (int*)malloc(sizeof(int) * maxTiles);
+			if ((*c)[w + h * width].options != NULL) {
+				for (int i = 0; i < maxTiles; i++) {
+					(*c)[w + h * width].options[i] = 1;
+				}
+			}
 			(*c)[w + h * width].p.x = w;
 			(*c)[w + h * width].p.y = h;
 			(*c)[w + h * width].numCells = width * height;
@@ -232,3 +345,132 @@ void deleteCells(cell **c)
 	return;
 }
 
+void reduceNeighbours(cell *c, int_q_lnk *q, int sizeX, int sizeY, tile **lstTile)
+{
+	int x, y;
+	if (!pop_head_int_q(&x, &y, q)) {
+		return;	
+	}
+	
+	int maxOptions = c[0].maxOptions;
+	int *locOptionsNorth = (int*)calloc(maxOptions, sizeof(int));
+	int *locOptionsEast = (int*)calloc(maxOptions, sizeof(int));
+	int *locOptionsSouth = (int*)calloc(maxOptions, sizeof(int));
+	int *locOptionsWest = (int*)calloc(maxOptions, sizeof(int));
+	
+	int iCurCell = x + y * sizeX;
+	
+	/* loop every option */
+	for (int opt = 0; opt < maxOptions; opt++) {
+		/* check, if tile no. opt is an option for the cell */
+		if (c[iCurCell].options[opt] != 0) {
+			/* loop over every tileOption */
+			for (int iTileOpt = 0; iTileOpt < maxOptions; iTileOpt++) {
+				if((*lstTile)[opt].optionNorth[iTileOpt] == 1) locOptionsNorth[iTileOpt] = 1;
+				if((*lstTile)[opt].optionEast[iTileOpt] == 1) locOptionsEast[iTileOpt] = 1;
+				if((*lstTile)[opt].optionSouth[iTileOpt] == 1) locOptionsSouth[iTileOpt] = 1;
+				if((*lstTile)[opt].optionWest[iTileOpt] == 1) locOptionsWest[iTileOpt] = 1;
+			}
+		}
+	}
+	
+	cell nCell;
+	int newOption;
+	/* to implement: adding changed cells to queue */
+	/* compare to options north*/
+	int changed = 0;
+	if (!(y - 1 < 0)) {
+		nCell = c[x + (y-1) * sizeX];
+		if (!nCell.collapsed) {
+			for (int opt = 0; opt < maxOptions; opt++) {
+				newOption = nCell.options[opt] && locOptionsNorth[opt];
+				if (nCell.options[opt] != newOption) {
+					changed = 1;
+				}
+				nCell.options[opt] = newOption;
+			}
+			if (changed) {
+				push_to_int_q (x, y - 1, q);
+			}
+		}
+	}
+	
+	/* compare to options east*/
+	changed = 0;
+	if (!(x + 1 >= sizeX)) {
+		nCell = c[(x + 1) + y * sizeX];
+		if (!nCell.collapsed) {
+			for (int opt = 0; opt < maxOptions; opt++) {
+				newOption = nCell.options[opt] && locOptionsEast[opt];
+				if (nCell.options[opt] != newOption) {
+					changed = 1;
+				}
+				nCell.options[opt] = newOption;
+			}
+			if (changed) {
+				push_to_int_q (x + 1, y, q);
+			}
+		}
+	}
+	
+	/* compare to options south*/
+	changed = 0;
+	if (!(y + 1 >= sizeY)) {
+		nCell = c[x + (y + 1) * sizeX];
+		if (!nCell.collapsed) {
+			for (int opt = 0; opt < maxOptions; opt++) {
+				newOption = nCell.options[opt] && locOptionsSouth[opt];
+				if (nCell.options[opt] != newOption) {
+					changed = 1;
+				}
+				nCell.options[opt] = newOption;
+			}
+			if (changed) {
+				push_to_int_q (x, y + 1, q);
+			}
+		}
+	}
+	
+	/* compare to options west*/
+	changed = 0;
+	if (!(x - 1 < 0)) {
+		nCell = c[(x - 1) + y * sizeX];
+		if (!nCell.collapsed) {
+			for (int opt = 0; opt < maxOptions; opt++) {
+				newOption = nCell.options[opt] && locOptionsWest[opt];
+				if (nCell.options[opt] != newOption) {
+					changed = 1;
+				}
+				nCell.options[opt] = newOption;
+			}
+			if (changed) {
+				push_to_int_q (x - 1, y, q);
+			}
+		}
+	}
+	
+	free(locOptionsNorth);
+	free(locOptionsEast);
+	free(locOptionsSouth);
+	free(locOptionsWest);
+	
+	reduceNeighbours(c, q, sizeX, sizeY, lstTile);
+	
+	return;
+}
+
+void printAllCells(cell *c, int sizeX, int sizeY)
+{
+	int maxOptions = c[0].maxOptions;
+	for (int y = 0; y < sizeY; y++) {
+		for (int x = 0; x < sizeX; x++) {
+			/* printf("c[%2d|%2d]: ", x, y); */
+			for (int opt = 0; opt < maxOptions; opt++) {
+				printf("%d", c[x + y * sizeX].options[opt]);
+			}
+			printf(" | ");
+		}
+		printf("\n");
+	}
+	return;
+}
