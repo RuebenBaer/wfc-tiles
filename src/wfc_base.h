@@ -25,9 +25,11 @@ class MainFrame: public wxFrame
 		void OnPaint(wxPaintEvent &event);
 		void OnEreaseBackground(wxEraseEvent &event);
 		void OnOpenTemplate(wxCommandEvent &event);
+		void OnCanvasSize(wxCommandEvent &event);
 		
 	private:		
 		wxImage imgTemplate, imgCanvas;
+		int canvasX, canvasY;
 		tile *m_tiles;
 		int maxTiles;
 		cell *c;
@@ -36,7 +38,7 @@ class MainFrame: public wxFrame
 enum
 {
 	ID_MAINWIN_QUIT = wxID_HIGHEST+1,
-    ID_MAINWIN_OPEN_TEMPLATE
+    ID_MAINWIN_OPEN_TEMPLATE, ID_MAINWIN_CANVAS_SIZE
 };
 
 

@@ -3,9 +3,9 @@
    #include <wx/wx.h>
 #endif
 
-#include "wfc_base.h"
+#include <wx/numdlg.h>
 
-#define GRIDSIZE 20
+#include "wfc_base.h"
 
 IMPLEMENT_APP(MainApp)
 
@@ -50,17 +50,22 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	Bind(wxEVT_PAINT, &MainFrame::OnPaint, this);
 	Bind(wxEVT_ERASE_BACKGROUND, &MainFrame::OnEreaseBackground, this);
 	Bind(wxEVT_MENU, &MainFrame::OnOpenTemplate, this, ID_MAINWIN_OPEN_TEMPLATE);
+	Bind(wxEVT_MENU, &MainFrame::OnCanvasSize, this, ID_MAINWIN_CANVAS_SIZE);
 
 	wxMenu *FileMenu = new wxMenu;
 	wxMenuBar *MenuBar = new wxMenuBar;
 	
 	FileMenu->Append(ID_MAINWIN_QUIT, wxT("&Beenden\tALT-F4"));
 	FileMenu->Append(ID_MAINWIN_OPEN_TEMPLATE, wxT("Kachelvorlage öffnen"));
+	FileMenu->AppendSeparator();
+	FileMenu->Append(ID_MAINWIN_CANVAS_SIZE, wxT("Leinwandgröße ändern"));
 	
 	MenuBar->Append(FileMenu, wxT("&Datei"));
 	SetMenuBar(MenuBar);
 	
-	imgCanvas = wxImage(GRIDSIZE * 3, GRIDSIZE * 3, true);
+	
+	canvasX = canvasY = 20;
+	imgCanvas = wxImage(canvasX * 3, canvasY * 3, true);
 	
 	c = NULL;
 		
@@ -149,7 +154,7 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 		return;
 	
 	imgCanvas.Destroy();
-	imgCanvas = wxImage(GRIDSIZE * 3, GRIDSIZE * 3, true);
+	imgCanvas = wxImage(canvasX * 3, canvasY * 3, true);
 	
 	if (m_tiles) {
 		deleteTiles(&m_tiles);
@@ -163,10 +168,24 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 		deleteCells(&c);
 		printf("Cells = %p\n", (void*)c);
 	}
-	initCells(&c, GRIDSIZE, GRIDSIZE, maxTiles);
+	initCells(&c, canvasX, canvasY, maxTiles);
 	
-	collapseGrid(c, GRIDSIZE, GRIDSIZE, &m_tiles, &maxTiles, canvasData, imgCanvas.GetWidth(), imgCanvas.GetHeight());
+	collapseGrid(c, canvasX, canvasY, &m_tiles, &maxTiles, canvasData, imgCanvas.GetWidth(), imgCanvas.GetHeight());
 
     Refresh();
     return;
 }
+
+void MainFrame::OnCanvasSize(wxCommandEvent &event)
+{
+	wxNumberEntryDialog nmbWidth(this, wxT("Bitte geben Sie eine Ganzzahl ein!"), wxT("neue Breite"), wxT("Leinwandgröße ändern"), canvasX, 1, 300);
+	nmbWidth.ShowModal();
+	canvasX = nmbWidth.GetValue();
+	
+	
+	wxNumberEntryDialog nmbHeight(this, wxT("Bitte geben Sie eine Ganzzahl ein!"), wxT("neue Höhe"), wxT("Leinwandgröße ändern"), canvasX, 1, 300);
+	nmbHeight.ShowModal();
+	canvasY = nmbHeight.GetValue();
+	return;
+}
+	

@@ -206,7 +206,7 @@ void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsign
 		}
 		selectRandomTile(&c[x + y * sizeX], &tileNmb);
 		if (tileNmb < 0) {
-			printf("tile selection failed\nexiting\n");
+			printf("tile selection failed (cell %3d | %3d: entropy = %d)\nexiting\n", x, y, c[x + y * sizeX].entropy);
 			return;
 		}
 		curTile = (*t)[tileNmb];
