@@ -3,42 +3,54 @@
 
 #include <stdlib.h>     /* srand, rand */
 #include <time.h>
+#include <thread>
 
 extern "C" {
 	#include "wfc\wfc-core.h"
 	#include "queue.h"
 }
 
+#define MAXPIXELSCALE 10
+
 class MainApp: public wxApp
 {
-  public:
-      virtual bool OnInit();
+public:
+	virtual bool OnInit();
 };
 
 class MainFrame: public wxFrame
 {
-	public:
-		MainFrame(const wxString &title, const wxPoint &pos, const wxSize &size);
-		~MainFrame();
-		void OnQuit(wxCommandEvent &event);
-		void OnSize(wxSizeEvent &event);
-		void OnPaint(wxPaintEvent &event);
-		void OnEreaseBackground(wxEraseEvent &event);
-		void OnOpenTemplate(wxCommandEvent &event);
-		void OnCanvasSize(wxCommandEvent &event);
-		
-	private:		
-		wxImage imgTemplate, imgCanvas;
-		int canvasX, canvasY;
-		tile *m_tiles;
-		int maxTiles;
-		cell *c;
+public:
+	MainFrame(const wxString &title, const wxPoint &pos, const wxSize &size);
+	~MainFrame();
+	
+private:
+	void OnQuit(wxCommandEvent &event);
+	void OnSize(wxSizeEvent &event);
+	void OnPaint(wxPaintEvent &event);
+	void OnEreaseBackground(wxEraseEvent &event);
+	void OnOpenTemplate(wxCommandEvent &event);
+	void OnCanvasSize(wxCommandEvent &event);
+	void OnTimer(wxTimerEvent &event);
+	void OnMouseWheel(wxMouseEvent &event);
+	void OnKeyDown(wxKeyEvent &event);
+
+	wxImage imgTemplate, imgCanvas;
+	int canvasX, canvasY;
+	int pixelScale;
+	tile *m_tiles;
+	int maxTiles;
+	cell *c;
+
+	wxTimer timer;
+	int TIMERTICK;
+	threadState thState;
 };
 
 enum
 {
 	ID_MAINWIN_QUIT = wxID_HIGHEST+1,
-    ID_MAINWIN_OPEN_TEMPLATE, ID_MAINWIN_CANVAS_SIZE
+    ID_MAINWIN_OPEN_TEMPLATE, ID_MAINWIN_CANVAS_SIZE, ID_MAINWIN_TIMER
 };
 
 

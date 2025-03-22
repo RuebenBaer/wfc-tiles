@@ -48,9 +48,13 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	Bind(wxEVT_MENU, &MainFrame::OnQuit, this, ID_MAINWIN_QUIT);
 	Bind(wxEVT_SIZE, &MainFrame::OnSize, this);
 	Bind(wxEVT_PAINT, &MainFrame::OnPaint, this);
+	Bind(wxEVT_MOUSEWHEEL, &MainFrame::OnMouseWheel, this);
+	Bind(wxEVT_KEY_DOWN, &MainFrame::OnKeyDown, this);
+	
 	Bind(wxEVT_ERASE_BACKGROUND, &MainFrame::OnEreaseBackground, this);
 	Bind(wxEVT_MENU, &MainFrame::OnOpenTemplate, this, ID_MAINWIN_OPEN_TEMPLATE);
 	Bind(wxEVT_MENU, &MainFrame::OnCanvasSize, this, ID_MAINWIN_CANVAS_SIZE);
+	Bind(wxEVT_TIMER, &MainFrame::OnTimer, this, ID_MAINWIN_TIMER);
 
 	wxMenu *FileMenu = new wxMenu;
 	wxMenuBar *MenuBar = new wxMenuBar;
@@ -65,9 +69,14 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	
 	
 	canvasX = canvasY = 20;
+	pixelScale = 3;
 	imgCanvas = wxImage(canvasX * 3, canvasY * 3, true);
+	wxColor bgCol = wxClientDC(this).GetBackground().GetColour();
+	imgCanvas.SetRGB(wxRect(0, 0, imgCanvas.GetWidth(), imgCanvas.GetHeight()), bgCol.GetRed(), bgCol.GetGreen(), bgCol.GetBlue());
 	
 	c = NULL;
+	
+	TIMERTICK = 200;
 		
 	CreateStatusBar(2);
 	SetStatusText(wxT("Wave function collapse"));
@@ -102,7 +111,7 @@ void MainFrame::OnPaint(wxPaintEvent& event)
 	
 	if(imgCanvas.IsOk())
 	{
-		dc.DrawBitmap(wxBitmap(imgCanvas.Scale(imgCanvas.GetWidth()*5, imgCanvas.GetHeight()*5)), wxPoint(0, 0));
+		dc.DrawBitmap(wxBitmap(imgCanvas.Scale(imgCanvas.GetWidth()*pixelScale, imgCanvas.GetHeight()*pixelScale)), wxPoint(0, 0));
 	}
 	return;
 }
@@ -120,6 +129,18 @@ void MainFrame::OnSize(wxSizeEvent &event)
 
 void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 {
+	if (thState.finished != 1) {
+		if (wxMessageDialog(this,
+						wxT("Thread ist noch aktiv!\nNeues Template öffnen?"),
+						wxT("Achtung"),
+						wxYES | wxNO).ShowModal() == wxID_YES) {
+			thState.abort = 1;
+			wxMessageDialog(this, wxT("Thread wird abgebrochen)")).ShowModal();
+			while(thState.finished != 1);
+		} else {
+			return;	
+		}
+	}
 	wxFileDialog TexturOpener(this, wxT("Kachelvorlage öffnen"), wxT(""), wxT(""), wxT("PNG/JPEG-Dateien (*.png, *.jpg)|*png; *.jpg"),1);
 	if(TexturOpener.ShowModal()==wxID_CANCEL)return;
     wxString DateiEndung, Pfad;
@@ -155,6 +176,8 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 	
 	imgCanvas.Destroy();
 	imgCanvas = wxImage(canvasX * 3, canvasY * 3, true);
+	wxColor bgCol = wxClientDC(this).GetBackground().GetColour();
+	imgCanvas.SetRGB(wxRect(0, 0, imgCanvas.GetWidth(), imgCanvas.GetHeight()), bgCol.GetRed(), bgCol.GetGreen(), bgCol.GetBlue());
 	
 	if (m_tiles) {
 		deleteTiles(&m_tiles);
@@ -170,9 +193,14 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 	}
 	initCells(&c, canvasX, canvasY, maxTiles);
 	
-	collapseGrid(c, canvasX, canvasY, &m_tiles, &maxTiles, canvasData, imgCanvas.GetWidth(), imgCanvas.GetHeight());
+	thState.finished = 0;
+	thState.abort = 0;
+	std::thread thCollapseGrid(&collapseGrid, c, canvasX, canvasY, &m_tiles, &maxTiles, canvasData, imgCanvas.GetWidth(), imgCanvas.GetHeight(), &thState);
+	thCollapseGrid.detach();
+	
+	timer.SetOwner(this, ID_MAINWIN_TIMER);
+	timer.Start(TIMERTICK);
 
-    Refresh();
     return;
 }
 
@@ -188,4 +216,50 @@ void MainFrame::OnCanvasSize(wxCommandEvent &event)
 	canvasY = nmbHeight.GetValue();
 	return;
 }
+
+void MainFrame::OnTimer(wxTimerEvent &event)
+{
+	Refresh();
+	if (thState.finished == 1) {
+		timer.Stop();
+	}
+	return;
+}
+
+void MainFrame::OnMouseWheel(wxMouseEvent &event)
+{
+	if (event.GetWheelRotation() < 0) {
+		pixelScale--;
+	}
+	if (event.GetWheelRotation() > 0) {
+		pixelScale++;
+	}
 	
+	if (pixelScale < 1) {
+		pixelScale = 1;
+	}else if (pixelScale > MAXPIXELSCALE) {
+		pixelScale = MAXPIXELSCALE;
+	}
+	
+	SetStatusText(wxString::Format(wxT("pixel scale: %d"), pixelScale), 0);
+	Refresh();
+}
+
+void MainFrame::OnKeyDown(wxKeyEvent &event)
+{
+	switch (event.GetKeyCode()) {
+		case WXK_ESCAPE:
+			if (thState.finished != 1 && wxMessageDialog(this,
+													wxT("Thread läuft noch!\n Soll abgebrochen werden?)"),
+													wxT("Escape gedrückt"), wxYES|wxNO).ShowModal() == wxID_YES
+				) {
+				thState.abort = 1;
+				while(thState.finished != 1);
+				wxMessageDialog(this, wxT("Thread erfolgreich abgebrochen)")).ShowModal();
+			} else {
+				SetStatusText(wxT("Esc gedrückt"), 0);
+			}
+			break;
+	}
+	return;
+}
