@@ -28,7 +28,12 @@ typedef struct cells {
 	pos p;
 } cell;
 
-extern void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsigned char *canvasData, int canvasWidth, int canvasHeight);
+typedef struct thread_state {
+	int finished;
+	int abort;
+}threadState;
+
+extern void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsigned char *canvasData, int canvasWidth, int canvasHeight, threadState *state);
 extern void initTiles(tile **t, int *maxTiles, unsigned char *picData, int imgWidth, int imgHeight);
 extern void deleteTiles(tile **t);
 

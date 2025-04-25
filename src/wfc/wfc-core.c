@@ -192,7 +192,7 @@ void fillTileOptions(tile *t_tiles, int thisIndex, int otherIndex)
 	return;
 }
 
-void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsigned char *canvasData, int canvasWidth, int canvasHeight)
+void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsigned char *canvasData, int canvasWidth, int canvasHeight, threadState *state)
 {
 	int x, y, tileNmb;
 	tile curTile;
@@ -201,12 +201,18 @@ void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsign
 	random = rand();
 	
 	do {
+		if (state->abort == 1) {/* request for abort */
+			printf("abort requested\n");
+			state->finished = 1;
+			return;
+		}
 		if (!selectCellToCollapse(c, &x, &y, sizeX, sizeY)) {
 			break;
 		}
 		selectRandomTile(&c[x + y * sizeX], &tileNmb);
 		if (tileNmb < 0) {
 			printf("tile selection failed (cell %3d | %3d: entropy = %d)\nexiting\n", x, y, c[x + y * sizeX].entropy);
+			state->finished = 1;
 			return;
 		}
 		curTile = (*t)[tileNmb];
@@ -215,15 +221,18 @@ void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsign
 		
 		int_q_lnk *queue = initQueue();
 		if (!queue) {
+			state->finished = 1;
 			return;
 		}
 		if (!push_to_int_q (x, y, queue)) {
+			state->finished = 1;
 			return;
 		}
 		reduceNeighbours(c, queue, sizeX, sizeY, t);
 		deleteQueue(queue);
 	}while (1);
 
+	state->finished = 1;
 	return;
 }
 
