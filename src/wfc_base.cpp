@@ -24,21 +24,6 @@ bool MainApp::OnInit()
 	
 	srand(time(NULL));
 	
-	/* int_q_lnk *queue = initQueue();
-	for (int i = 0; i < 5; i++) {
-		for (int k = 5; k > 0; k--){
-			push_to_int_q(i, k, queue);
-		}
-	}
-	int a, b;
-	for (int i = 0; i < 5; i++) {
-		for (int k = 5; k > 0; k--){
-			pop_head_int_q(&a, &b, queue);
-			printf("Head from Queue (%p) %d, %d\n", (void*)(queue), a, b);
-		}
-	}
-	deleteQueue(queue); */
-	
 	return TRUE;
 }
 

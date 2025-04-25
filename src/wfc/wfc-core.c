@@ -58,7 +58,12 @@ void drawCell(cell *c, unsigned char* canvas, int width, int height)
 
 void initTiles(tile **t, int *numTiles, unsigned char *picData, int imgWidth, int imgHeight)
 {
-	int maxTiles = *numTiles = imgWidth / 3;
+	if (imgWidth < 3 || imgHeight < 3) {
+		*numTiles = 0;
+		*t = (tile*) malloc(sizeof(tile) * 1);
+		return;
+	}
+	int maxTiles = *numTiles = (imgWidth - 2) * (imgHeight - 2);
 
 	tile *tempT = (tile*) malloc(sizeof(tile) * maxTiles);
 	for (int i = 0; i < maxTiles; i++) {
@@ -70,6 +75,7 @@ void initTiles(tile **t, int *numTiles, unsigned char *picData, int imgWidth, in
 	}
 	*t = tempT;
 	
+	/* HIER WEITER */
 	for (int i = 0; i < maxTiles; i++) {
 		for (int w = 0; w < 3; w++) {
 			for (int h = 0; h < 3; h++) {
