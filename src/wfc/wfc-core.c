@@ -60,7 +60,7 @@ void initTiles(tile **t, int *numTiles, unsigned char *picData, int imgWidth, in
 		*t = (tile*) malloc(sizeof(tile) * 1);
 		return;
 	}
-	int maxTiles = *numTiles = (imgWidth - 2) * (imgHeight - 2);
+	int maxTiles = *numTiles = imgWidth * imgHeight;
 
 	tile *tempT = (tile*) malloc(sizeof(tile) * maxTiles);
 	for (int i = 0; i < maxTiles; i++) {
@@ -74,13 +74,13 @@ void initTiles(tile **t, int *numTiles, unsigned char *picData, int imgWidth, in
 	
 	int wImg, hImg;
 	for (int i = 0; i < maxTiles; i++) {
-		wImg = i % (imgWidth - 2);
-		hImg = i / (imgWidth - 2);
+		wImg = i % imgWidth;
+		hImg = i / imgWidth;
 		for (int h = 0; h < 3; h++) {
 			for (int w = 0; w < 3; w++) {
-				(*t)[i].data[(w + h * 3) * 3 + 0] = picData[((wImg + w) + (hImg + h) * imgWidth) * 3 + 0];
-				(*t)[i].data[(w + h * 3) * 3 + 1] = picData[((wImg + w) + (hImg + h) * imgWidth) * 3 + 1];
-				(*t)[i].data[(w + h * 3) * 3 + 2] = picData[((wImg + w) + (hImg + h) * imgWidth) * 3 + 2];
+				(*t)[i].data[(w + h * 3) * 3 + 0] = picData[((wImg + w) % imgWidth + ((hImg + h) % imgHeight) * imgWidth) * 3 + 0];
+				(*t)[i].data[(w + h * 3) * 3 + 1] = picData[((wImg + w) % imgWidth + ((hImg + h) % imgHeight) * imgWidth) * 3 + 1];
+				(*t)[i].data[(w + h * 3) * 3 + 2] = picData[((wImg + w) % imgWidth + ((hImg + h) % imgHeight) * imgWidth) * 3 + 2];
 			}
 		}
 	}
