@@ -236,12 +236,12 @@ void MainFrame::OnKeyDown(wxKeyEvent &event)
 	switch (event.GetKeyCode()) {
 		case WXK_ESCAPE:
 			if (thState.finished != 1 && wxMessageDialog(this,
-													wxT("Thread läuft noch!\n Soll abgebrochen werden?)"),
+													wxT("Thread läuft noch!\n Soll abgebrochen werden?"),
 													wxT("Escape gedrückt"), wxYES|wxNO).ShowModal() == wxID_YES
 				) {
 				thState.abort = 1;
 				while(thState.finished != 1);
-				wxMessageDialog(this, wxT("Thread erfolgreich abgebrochen)")).ShowModal();
+				wxMessageDialog(this, wxT("Thread erfolgreich abgebrochen")).ShowModal();
 			} else {
 				SetStatusText(wxT("Esc gedrückt"), 0);
 			}

@@ -8,7 +8,7 @@ void findTileOptions(tile *lstTile, int nmbTile);
 void fillTileOptions(tile *lstTile, int ithis, int iother);
 void collapseCell(cell *c, tile *t, int tileNmb, int x, int y);
 void drawCell(cell *c, unsigned char* canvas, int width, int height);
-void reduceNeighbours(cell *c, int_q_lnk *queue, int sizeX, int sizeY, tile **lstTile);
+void reduceNeighbours(cell *c, int_q_lnk *queue, int sizeX, int sizeY, tile **lstTile, threadState *state);
 int selectCellToCollapse(cell *c, int *x, int *y, int sizeX, int sizeY);
 void selectRandomTile(cell *c, int *tileNmb);
 
@@ -119,15 +119,18 @@ void fillTileOptions(tile *t_tiles, int thisIndex, int otherIndex)
 	/* optionNorth */
 	isOption = 1;
 	for (int w = 0; w < 3; w++) {
-		if (t_tiles[thisIndex].data[(w + 0 * 3) * 3 + 0] != t_tiles[otherIndex].data[(w + 2 * 3) * 3 + 0]) {
+		if ((t_tiles[thisIndex].data[(w + 0 * 3) * 3 + 0] != t_tiles[otherIndex].data[(w + 1 * 3) * 3 + 0]) ||
+			(t_tiles[thisIndex].data[(w + 1 * 3) * 3 + 0] != t_tiles[otherIndex].data[(w + 2 * 3) * 3 + 0])) {
 			isOption = 0;
 			break;
 		}
-		if (t_tiles[thisIndex].data[(w + 0 * 3) * 3 + 1] != t_tiles[otherIndex].data[(w + 2 * 3) * 3 + 1]) {
+		if ((t_tiles[thisIndex].data[(w + 0 * 3) * 3 + 1] != t_tiles[otherIndex].data[(w + 1 * 3) * 3 + 1]) ||
+			(t_tiles[thisIndex].data[(w + 1 * 3) * 3 + 1] != t_tiles[otherIndex].data[(w + 2 * 3) * 3 + 1])) {
 			isOption = 0;
 			break;
 		}
-		if (t_tiles[thisIndex].data[(w + 0 * 3) * 3 + 2] != t_tiles[otherIndex].data[(w + 2 * 3) * 3 + 2]) {
+		if ((t_tiles[thisIndex].data[(w + 0 * 3) * 3 + 2] != t_tiles[otherIndex].data[(w + 1 * 3) * 3 + 2]) ||
+			(t_tiles[thisIndex].data[(w + 1 * 3) * 3 + 2] != t_tiles[otherIndex].data[(w + 2 * 3) * 3 + 2])) {
 			isOption = 0;
 			break;
 		}
@@ -138,15 +141,18 @@ void fillTileOptions(tile *t_tiles, int thisIndex, int otherIndex)
 	/* optionEast */
 	isOption = 1;
 	for (int h = 0; h < 3; h++) {
-		if (t_tiles[thisIndex].data[(2 + h * 3) * 3 + 0] != t_tiles[otherIndex].data[(0 + h * 3) * 3 + 0]) {
+		if ((t_tiles[thisIndex].data[(2 + h * 3) * 3 + 0] != t_tiles[otherIndex].data[(1 + h * 3) * 3 + 0]) ||
+			(t_tiles[thisIndex].data[(1 + h * 3) * 3 + 0] != t_tiles[otherIndex].data[(0 + h * 3) * 3 + 0])) {
 			isOption = 0;
 			break;
 		}
-		if (t_tiles[thisIndex].data[(2 + h * 3) * 3 + 1] != t_tiles[otherIndex].data[(0 + h * 3) * 3 + 1]) {
+		if ((t_tiles[thisIndex].data[(2 + h * 3) * 3 + 1] != t_tiles[otherIndex].data[(1 + h * 3) * 3 + 1]) ||
+			(t_tiles[thisIndex].data[(1 + h * 3) * 3 + 1] != t_tiles[otherIndex].data[(0 + h * 3) * 3 + 1])) {
 			isOption = 0;
 			break;
 		}
-		if (t_tiles[thisIndex].data[(2 + h * 3) * 3 + 2] != t_tiles[otherIndex].data[(0 + h * 3) * 3 + 2]) {
+		if ((t_tiles[thisIndex].data[(2 + h * 3) * 3 + 2] != t_tiles[otherIndex].data[(1 + h * 3) * 3 + 2]) ||
+			(t_tiles[thisIndex].data[(1 + h * 3) * 3 + 2] != t_tiles[otherIndex].data[(0 + h * 3) * 3 + 2])) {
 			isOption = 0;
 			break;
 		}
@@ -157,15 +163,18 @@ void fillTileOptions(tile *t_tiles, int thisIndex, int otherIndex)
 	/* optionSouth */
 	isOption = 1;
 	for (int w = 0; w < 3; w++) {
-		if (t_tiles[thisIndex].data[(w + 2 * 3) * 3 + 0] != t_tiles[otherIndex].data[(w + 0 * 3) * 3 + 0]) {
+		if ((t_tiles[thisIndex].data[(w + 2 * 3) * 3 + 0] != t_tiles[otherIndex].data[(w + 1 * 3) * 3 + 0]) ||
+			(t_tiles[thisIndex].data[(w + 1 * 3) * 3 + 0] != t_tiles[otherIndex].data[(w + 0 * 3) * 3 + 0])) {
 			isOption = 0;
 			break;
 		}
-		if (t_tiles[thisIndex].data[(w + 2 * 3) * 3 + 1] != t_tiles[otherIndex].data[(w + 0 * 3) * 3 + 1]) {
+		if ((t_tiles[thisIndex].data[(w + 2 * 3) * 3 + 1] != t_tiles[otherIndex].data[(w + 1 * 3) * 3 + 1]) ||
+			(t_tiles[thisIndex].data[(w + 1 * 3) * 3 + 1] != t_tiles[otherIndex].data[(w + 0 * 3) * 3 + 1])) {
 			isOption = 0;
 			break;
 		}
-		if (t_tiles[thisIndex].data[(w + 2 * 3) * 3 + 2] != t_tiles[otherIndex].data[(w + 0 * 3) * 3 + 2]) {
+		if ((t_tiles[thisIndex].data[(w + 2 * 3) * 3 + 2] != t_tiles[otherIndex].data[(w + 1 * 3) * 3 + 2]) ||
+			(t_tiles[thisIndex].data[(w + 1 * 3) * 3 + 2] != t_tiles[otherIndex].data[(w + 0 * 3) * 3 + 2])) {
 			isOption = 0;
 			break;
 		}
@@ -176,15 +185,18 @@ void fillTileOptions(tile *t_tiles, int thisIndex, int otherIndex)
 	/* optionWest */
 	isOption = 1;
 	for (int h = 0; h < 3; h++) {
-		if (t_tiles[thisIndex].data[(0 + h * 3) * 3 + 0] != t_tiles[otherIndex].data[(2 + h * 3) * 3 + 0]) {
+		if ((t_tiles[thisIndex].data[(0 + h * 3) * 3 + 0] != t_tiles[otherIndex].data[(1 + h * 3) * 3 + 0]) ||
+			(t_tiles[thisIndex].data[(1 + h * 3) * 3 + 0] != t_tiles[otherIndex].data[(2 + h * 3) * 3 + 0])) {
 			isOption = 0;
 			break;
 		}
-		if (t_tiles[thisIndex].data[(0 + h * 3) * 3 + 1] != t_tiles[otherIndex].data[(2 + h * 3) * 3 + 1]) {
+		if ((t_tiles[thisIndex].data[(0 + h * 3) * 3 + 1] != t_tiles[otherIndex].data[(1 + h * 3) * 3 + 1]) ||
+			(t_tiles[thisIndex].data[(1 + h * 3) * 3 + 1] != t_tiles[otherIndex].data[(2 + h * 3) * 3 + 1])) {
 			isOption = 0;
 			break;
 		}
-		if (t_tiles[thisIndex].data[(0 + h * 3) * 3 + 2] != t_tiles[otherIndex].data[(2 + h * 3) * 3 + 2]) {
+		if ((t_tiles[thisIndex].data[(0 + h * 3) * 3 + 2] != t_tiles[otherIndex].data[(1 + h * 3) * 3 + 2]) ||
+			(t_tiles[thisIndex].data[(1 + h * 3) * 3 + 2] != t_tiles[otherIndex].data[(2 + h * 3) * 3 + 2])) {
 			isOption = 0;
 			break;
 		}
@@ -230,7 +242,7 @@ void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsign
 			state->finished = 1;
 			return;
 		}
-		reduceNeighbours(c, queue, sizeX, sizeY, t);
+		reduceNeighbours(c, queue, sizeX, sizeY, t, state);
 		deleteQueue(queue);
 	}while (1);
 
@@ -348,15 +360,31 @@ void deleteCells(cell **c)
 	return;
 }
 
-void reduceNeighbours(cell *c, int_q_lnk *q, int sizeX, int sizeY, tile **lstTile)
+void reduceNeighbours(cell *c, int_q_lnk *q, int sizeX, int sizeY, tile **lstTile, threadState *state)
 {
 	int x, y;
-	while (pop_head_int_q(&x, &y, q)) {		
-		int maxOptions = c[0].maxOptions;
-		int *locOptionsNorth = (int*)calloc(maxOptions, sizeof(int));
-		int *locOptionsEast = (int*)calloc(maxOptions, sizeof(int));
-		int *locOptionsSouth = (int*)calloc(maxOptions, sizeof(int));
-		int *locOptionsWest = (int*)calloc(maxOptions, sizeof(int));
+	int maxOptions = c[0].maxOptions;
+	int *locOptionsNorth = (int*)calloc(maxOptions, sizeof(int));
+	int *locOptionsEast = (int*)calloc(maxOptions, sizeof(int));
+	int *locOptionsSouth = (int*)calloc(maxOptions, sizeof(int));
+	int *locOptionsWest = (int*)calloc(maxOptions, sizeof(int));
+	
+	while (pop_head_int_q(&x, &y, q)) {
+		if (state->abort == 1) {
+			printf("\tabort requested (reduceNeighbours)\n");
+			free(locOptionsNorth);
+			free(locOptionsEast);
+			free(locOptionsSouth);
+			free(locOptionsWest);
+			return;
+		}
+		
+		for (int iTileOpt = 0; iTileOpt < maxOptions; iTileOpt++) {
+			locOptionsNorth[iTileOpt] = 0;
+			locOptionsEast[iTileOpt] = 0;
+			locOptionsSouth[iTileOpt] = 0;
+			locOptionsWest[iTileOpt] = 0;
+		}
 		
 		int iCurCell = x + y * sizeX;
 		
@@ -448,12 +476,11 @@ void reduceNeighbours(cell *c, int_q_lnk *q, int sizeX, int sizeY, tile **lstTil
 				}
 			}
 		}
-		
-		free(locOptionsNorth);
-		free(locOptionsEast);
-		free(locOptionsSouth);
-		free(locOptionsWest);
 	}
+	free(locOptionsNorth);
+	free(locOptionsEast);
+	free(locOptionsSouth);
+	free(locOptionsWest);
 	
 	return;
 }
