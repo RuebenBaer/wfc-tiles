@@ -304,6 +304,7 @@ void selectRandomTile(cell *c, int *tileNmb)
 	if (c->entropy == 0) {
 		return;
 	}
+	srand(random);
 	int pick = random = rand();
 	pick = pick % c->entropy;
 	
