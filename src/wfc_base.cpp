@@ -60,6 +60,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	imgCanvas.SetRGB(wxRect(0, 0, imgCanvas.GetWidth(), imgCanvas.GetHeight()), bgCol.GetRed(), bgCol.GetGreen(), bgCol.GetBlue());
 	
 	c = NULL;
+	thState.finished = 1;
 	
 	TIMERTICK = 200;
 		
@@ -120,7 +121,7 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 						wxT("Achtung"),
 						wxYES | wxNO).ShowModal() == wxID_YES) {
 			thState.abort = 1;
-			wxMessageDialog(this, wxT("Thread wird abgebrochen)")).ShowModal();
+			wxMessageDialog(this, wxT("Thread wird abgebrochen")).ShowModal();
 			while(thState.finished != 1);
 		} else {
 			return;	
@@ -160,7 +161,7 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 		return;
 	
 	imgCanvas.Destroy();
-	imgCanvas = wxImage(canvasX * 3, canvasY * 3, true);
+	imgCanvas = wxImage(canvasX, canvasY, true);
 	wxColor bgCol = wxClientDC(this).GetBackground().GetColour();
 	imgCanvas.SetRGB(wxRect(0, 0, imgCanvas.GetWidth(), imgCanvas.GetHeight()), bgCol.GetRed(), bgCol.GetGreen(), bgCol.GetBlue());
 	
@@ -196,7 +197,7 @@ void MainFrame::OnCanvasSize(wxCommandEvent &event)
 	canvasX = nmbWidth.GetValue();
 	
 	
-	wxNumberEntryDialog nmbHeight(this, wxT("Bitte geben Sie eine Ganzzahl ein!"), wxT("neue Höhe"), wxT("Leinwandgröße ändern"), canvasX, 1, 300);
+	wxNumberEntryDialog nmbHeight(this, wxT("Bitte geben Sie eine Ganzzahl ein!"), wxT("neue Höhe"), wxT("Leinwandgröße ändern"), canvasY, 1, 300);
 	nmbHeight.ShowModal();
 	canvasY = nmbHeight.GetValue();
 	return;

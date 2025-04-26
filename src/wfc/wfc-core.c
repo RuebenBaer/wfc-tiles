@@ -39,20 +39,17 @@ void drawCell(cell *c, unsigned char* canvas, int width, int height)
 		printf("Cell is not collapsed\n");
 		return;
 	}
-	if((c->p.x + 3) >= width || (c->p.y + 3) >= height) {
+	if((c->p.x) >= width || (c->p.y) >= height) {
 		printf("Cell (%d, %d) outside canvas (%d, %d)!\n", c->p.x, c->p.y, width, height);
 		return;
 	}
 	tile *t = c->m_tile;
 	int curpos;
-	for (int h = 0; h < 3; h++) {
-		for (int w = 0; w < 3; w++) {
-			curpos = ((c->p.x * 3 + w) + (c->p.y * 3 + h) * width) * 3;
-			canvas[curpos + 0] = t->data[(w + h * 3) * 3 + 0];
-			canvas[curpos + 1] = t->data[(w + h * 3) * 3 + 1];
-			canvas[curpos + 2] = t->data[(w + h * 3) * 3 + 2];
-		}
-	}
+	curpos = (c->p.x + c->p.y * width) * 3;
+	canvas[curpos + 0] = t->data[12]; /* 4. Pixel ist die Mitte der Kachel * 3 (RGB) = 12 */
+	canvas[curpos + 1] = t->data[13];
+	canvas[curpos + 2] = t->data[14];
+	
 	return;
 }
 
@@ -75,13 +72,15 @@ void initTiles(tile **t, int *numTiles, unsigned char *picData, int imgWidth, in
 	}
 	*t = tempT;
 	
-	/* HIER WEITER */
+	int wImg, hImg;
 	for (int i = 0; i < maxTiles; i++) {
-		for (int w = 0; w < 3; w++) {
-			for (int h = 0; h < 3; h++) {
-				(*t)[i].data[(w + h * 3) * 3 + 0] = picData[((i * 3 + w) + h * imgWidth) * 3 + 0];
-				(*t)[i].data[(w + h * 3) * 3 + 1] = picData[((i * 3 + w) + h * imgWidth) * 3 + 1];
-				(*t)[i].data[(w + h * 3) * 3 + 2] = picData[((i * 3 + w) + h * imgWidth) * 3 + 2];
+		wImg = i % (imgWidth - 2);
+		hImg = i / (imgWidth - 2);
+		for (int h = 0; h < 3; h++) {
+			for (int w = 0; w < 3; w++) {
+				(*t)[i].data[(w + h * 3) * 3 + 0] = picData[((wImg + w) + (hImg + h) * imgWidth) * 3 + 0];
+				(*t)[i].data[(w + h * 3) * 3 + 1] = picData[((wImg + w) + (hImg + h) * imgWidth) * 3 + 1];
+				(*t)[i].data[(w + h * 3) * 3 + 2] = picData[((wImg + w) + (hImg + h) * imgWidth) * 3 + 2];
 			}
 		}
 	}
@@ -106,12 +105,9 @@ void deleteTiles(tile **t)
 void findTileOptions(tile *lstTile, int nmbTile)
 {
 	for (int ithis = 0; ithis < nmbTile; ithis++) {
-		printf("Option (%d):", ithis);
 		for (int iother = 0; iother < nmbTile; iother++) {
 			fillTileOptions(lstTile, ithis, iother);
-			printf(" %d|%d|%d|%d", lstTile[ithis].optionNorth[iother], lstTile[ithis].optionEast[iother], lstTile[ithis].optionSouth[iother], lstTile[ithis].optionWest[iother]);
 		}
-		printf("\n");
 	}
 	return;
 }
@@ -355,113 +351,109 @@ void deleteCells(cell **c)
 void reduceNeighbours(cell *c, int_q_lnk *q, int sizeX, int sizeY, tile **lstTile)
 {
 	int x, y;
-	if (!pop_head_int_q(&x, &y, q)) {
-		return;	
-	}
-	
-	int maxOptions = c[0].maxOptions;
-	int *locOptionsNorth = (int*)calloc(maxOptions, sizeof(int));
-	int *locOptionsEast = (int*)calloc(maxOptions, sizeof(int));
-	int *locOptionsSouth = (int*)calloc(maxOptions, sizeof(int));
-	int *locOptionsWest = (int*)calloc(maxOptions, sizeof(int));
-	
-	int iCurCell = x + y * sizeX;
-	
-	/* loop every option */
-	for (int opt = 0; opt < maxOptions; opt++) {
-		/* check, if tile no. opt is an option for the cell */
-		if (c[iCurCell].options[opt] != 0) {
-			/* loop over every tileOption */
-			for (int iTileOpt = 0; iTileOpt < maxOptions; iTileOpt++) {
-				if((*lstTile)[opt].optionNorth[iTileOpt] == 1) locOptionsNorth[iTileOpt] = 1;
-				if((*lstTile)[opt].optionEast[iTileOpt] == 1) locOptionsEast[iTileOpt] = 1;
-				if((*lstTile)[opt].optionSouth[iTileOpt] == 1) locOptionsSouth[iTileOpt] = 1;
-				if((*lstTile)[opt].optionWest[iTileOpt] == 1) locOptionsWest[iTileOpt] = 1;
-			}
-		}
-	}
-	
-	cell nCell;
-	int newOption;
-	/* to implement: adding changed cells to queue */
-	/* compare to options north*/
-	int changed = 0;
-	if (!(y - 1 < 0)) {
-		nCell = c[x + (y-1) * sizeX];
-		if (!nCell.collapsed) {
-			for (int opt = 0; opt < maxOptions; opt++) {
-				newOption = nCell.options[opt] && locOptionsNorth[opt];
-				if (nCell.options[opt] != newOption) {
-					changed = 1;
+	while (pop_head_int_q(&x, &y, q)) {		
+		int maxOptions = c[0].maxOptions;
+		int *locOptionsNorth = (int*)calloc(maxOptions, sizeof(int));
+		int *locOptionsEast = (int*)calloc(maxOptions, sizeof(int));
+		int *locOptionsSouth = (int*)calloc(maxOptions, sizeof(int));
+		int *locOptionsWest = (int*)calloc(maxOptions, sizeof(int));
+		
+		int iCurCell = x + y * sizeX;
+		
+		/* loop every option */
+		for (int opt = 0; opt < maxOptions; opt++) {
+			/* check, if tile no. opt is an option for the cell */
+			if (c[iCurCell].options[opt] != 0) {
+				/* loop over every tileOption */
+				for (int iTileOpt = 0; iTileOpt < maxOptions; iTileOpt++) {
+					if((*lstTile)[opt].optionNorth[iTileOpt] == 1) locOptionsNorth[iTileOpt] = 1;
+					if((*lstTile)[opt].optionEast[iTileOpt] == 1) locOptionsEast[iTileOpt] = 1;
+					if((*lstTile)[opt].optionSouth[iTileOpt] == 1) locOptionsSouth[iTileOpt] = 1;
+					if((*lstTile)[opt].optionWest[iTileOpt] == 1) locOptionsWest[iTileOpt] = 1;
 				}
-				nCell.options[opt] = newOption;
-			}
-			if (changed) {
-				push_to_int_q (x, y - 1, q);
 			}
 		}
-	}
-	
-	/* compare to options east*/
-	changed = 0;
-	if (!(x + 1 >= sizeX)) {
-		nCell = c[(x + 1) + y * sizeX];
-		if (!nCell.collapsed) {
-			for (int opt = 0; opt < maxOptions; opt++) {
-				newOption = nCell.options[opt] && locOptionsEast[opt];
-				if (nCell.options[opt] != newOption) {
-					changed = 1;
+		
+		cell nCell;
+		int newOption;
+		/* to implement: adding changed cells to queue */
+		/* compare to options north*/
+		int changed = 0;
+		if (!(y - 1 < 0)) {
+			nCell = c[x + (y-1) * sizeX];
+			if (!nCell.collapsed) {
+				for (int opt = 0; opt < maxOptions; opt++) {
+					newOption = nCell.options[opt] && locOptionsNorth[opt];
+					if (nCell.options[opt] != newOption) {
+						changed = 1;
+					}
+					nCell.options[opt] = newOption;
 				}
-				nCell.options[opt] = newOption;
-			}
-			if (changed) {
-				push_to_int_q (x + 1, y, q);
-			}
-		}
-	}
-	
-	/* compare to options south*/
-	changed = 0;
-	if (!(y + 1 >= sizeY)) {
-		nCell = c[x + (y + 1) * sizeX];
-		if (!nCell.collapsed) {
-			for (int opt = 0; opt < maxOptions; opt++) {
-				newOption = nCell.options[opt] && locOptionsSouth[opt];
-				if (nCell.options[opt] != newOption) {
-					changed = 1;
+				if (changed) {
+					push_to_int_q (x, y - 1, q);
 				}
-				nCell.options[opt] = newOption;
-			}
-			if (changed) {
-				push_to_int_q (x, y + 1, q);
 			}
 		}
-	}
-	
-	/* compare to options west*/
-	changed = 0;
-	if (!(x - 1 < 0)) {
-		nCell = c[(x - 1) + y * sizeX];
-		if (!nCell.collapsed) {
-			for (int opt = 0; opt < maxOptions; opt++) {
-				newOption = nCell.options[opt] && locOptionsWest[opt];
-				if (nCell.options[opt] != newOption) {
-					changed = 1;
+		
+		/* compare to options east*/
+		changed = 0;
+		if (!(x + 1 >= sizeX)) {
+			nCell = c[(x + 1) + y * sizeX];
+			if (!nCell.collapsed) {
+				for (int opt = 0; opt < maxOptions; opt++) {
+					newOption = nCell.options[opt] && locOptionsEast[opt];
+					if (nCell.options[opt] != newOption) {
+						changed = 1;
+					}
+					nCell.options[opt] = newOption;
 				}
-				nCell.options[opt] = newOption;
-			}
-			if (changed) {
-				push_to_int_q (x - 1, y, q);
+				if (changed) {
+					push_to_int_q (x + 1, y, q);
+				}
 			}
 		}
+		
+		/* compare to options south*/
+		changed = 0;
+		if (!(y + 1 >= sizeY)) {
+			nCell = c[x + (y + 1) * sizeX];
+			if (!nCell.collapsed) {
+				for (int opt = 0; opt < maxOptions; opt++) {
+					newOption = nCell.options[opt] && locOptionsSouth[opt];
+					if (nCell.options[opt] != newOption) {
+						changed = 1;
+					}
+					nCell.options[opt] = newOption;
+				}
+				if (changed) {
+					push_to_int_q (x, y + 1, q);
+				}
+			}
+		}
+		
+		/* compare to options west*/
+		changed = 0;
+		if (!(x - 1 < 0)) {
+			nCell = c[(x - 1) + y * sizeX];
+			if (!nCell.collapsed) {
+				for (int opt = 0; opt < maxOptions; opt++) {
+					newOption = nCell.options[opt] && locOptionsWest[opt];
+					if (nCell.options[opt] != newOption) {
+						changed = 1;
+					}
+					nCell.options[opt] = newOption;
+				}
+				if (changed) {
+					push_to_int_q (x - 1, y, q);
+				}
+			}
+		}
+		
+		free(locOptionsNorth);
+		free(locOptionsEast);
+		free(locOptionsSouth);
+		free(locOptionsWest);
 	}
-	
-	free(locOptionsNorth);
-	free(locOptionsEast);
-	free(locOptionsSouth);
-	free(locOptionsWest);
-	
-	reduceNeighbours(c, q, sizeX, sizeY, lstTile);
 	
 	return;
 }
