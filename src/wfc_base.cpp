@@ -49,6 +49,8 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	Bind(wxEVT_SIZE, &MainFrame::OnSize, this);
 	Bind(wxEVT_PAINT, &MainFrame::OnPaint, this);
 	Bind(wxEVT_MOUSEWHEEL, &MainFrame::OnMouseWheel, this);
+	Bind(wxEVT_LEFT_DOWN, &MainFrame::OnMouseLeftDown, this);
+	Bind(wxEVT_MOTION, &MainFrame::OnMouseMove, this);
 	Bind(wxEVT_KEY_DOWN, &MainFrame::OnKeyDown, this);
 	
 	Bind(wxEVT_ERASE_BACKGROUND, &MainFrame::OnEreaseBackground, this);
@@ -70,6 +72,8 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	
 	canvasX = canvasY = 20;
 	pixelScale = 3;
+	dcOffsetX = 0;
+	dcOffsetY = 0;
 	imgCanvas = wxImage(canvasX * 3, canvasY * 3, true);
 	wxColor bgCol = wxClientDC(this).GetBackground().GetColour();
 	imgCanvas.SetRGB(wxRect(0, 0, imgCanvas.GetWidth(), imgCanvas.GetHeight()), bgCol.GetRed(), bgCol.GetGreen(), bgCol.GetBlue());
@@ -111,7 +115,7 @@ void MainFrame::OnPaint(wxPaintEvent& event)
 	
 	if(imgCanvas.IsOk())
 	{
-		dc.DrawBitmap(wxBitmap(imgCanvas.Scale(imgCanvas.GetWidth()*pixelScale, imgCanvas.GetHeight()*pixelScale)), wxPoint(0, 0));
+		dc.DrawBitmap(wxBitmap(imgCanvas.Scale(imgCanvas.GetWidth()*pixelScale, imgCanvas.GetHeight()*pixelScale)), wxPoint(dcOffsetX, dcOffsetY));
 	}
 	return;
 }
@@ -245,6 +249,26 @@ void MainFrame::OnMouseWheel(wxMouseEvent &event)
 	Refresh();
 }
 
+void MainFrame::OnMouseLeftDown(wxMouseEvent &event)
+{
+	mousePos = event.GetPosition();
+	event.Skip();
+	return;
+}
+
+void MainFrame::OnMouseMove(wxMouseEvent &event)
+{
+	if (event.Dragging()) {
+		wxPoint newMousePos = event.GetPosition();
+		dcOffsetX += newMousePos.x - mousePos.x;
+		dcOffsetY += newMousePos.y - mousePos.y;
+		mousePos = newMousePos;
+		Refresh();
+	}
+	event.Skip();
+	return;
+}
+
 void MainFrame::OnKeyDown(wxKeyEvent &event)
 {
 	switch (event.GetKeyCode()) {
@@ -259,6 +283,11 @@ void MainFrame::OnKeyDown(wxKeyEvent &event)
 			} else {
 				SetStatusText(wxT("Esc gedrückt"), 0);
 			}
+			break;
+		case WXK_F12:
+			dcOffsetX = 0;
+			dcOffsetY = 0;
+			Refresh();
 			break;
 	}
 	return;

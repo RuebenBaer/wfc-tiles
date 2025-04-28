@@ -33,11 +33,15 @@ private:
 	void OnCanvasSize(wxCommandEvent &event);
 	void OnTimer(wxTimerEvent &event);
 	void OnMouseWheel(wxMouseEvent &event);
+	void OnMouseMove(wxMouseEvent &event);
+	void OnMouseLeftDown(wxMouseEvent &event);
 	void OnKeyDown(wxKeyEvent &event);
 
 	wxImage imgTemplate, imgCanvas;
 	int canvasX, canvasY;
 	int pixelScale;
+	int dcOffsetX, dcOffsetY;
+	wxPoint mousePos;
 	tile *m_tiles;
 	int maxTiles;
 	cell *c;
