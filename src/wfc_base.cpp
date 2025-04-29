@@ -86,6 +86,12 @@ MainFrame::~MainFrame()
 
 void MainFrame::OnQuit(wxCommandEvent & WXUNUSED(event))
 {
+	if (thState.finished != 1) {
+		thState.abort = 1;
+		printf("Thread laeuft noch: wird abgebrochen...");
+		while(thState.finished != 1);
+	}
+	printf("erledigt!\n");
 	Close(TRUE);
 }
 
@@ -99,10 +105,14 @@ void MainFrame::OnPaint(wxPaintEvent& event)
 	
 	SetStatusText(wxString::Format(wxT("DC-Größe: %d, %d"), dc.GetSize().GetWidth(), dc.GetSize().GetHeight()), 1);
 	
+	int w = imgCanvas.GetWidth()*pixelScale;
+	int h = imgCanvas.GetHeight()*pixelScale;
 	if(imgCanvas.IsOk())
 	{
-		dc.DrawBitmap(wxBitmap(imgCanvas.Scale(imgCanvas.GetWidth()*pixelScale, imgCanvas.GetHeight()*pixelScale)), wxPoint(dcOffsetX, dcOffsetY));
+		dc.DrawBitmap(wxBitmap(imgCanvas.Scale(w, h)), wxPoint(dcOffsetX, dcOffsetY));
 	}
+	dc.SetBrush(*wxTRANSPARENT_BRUSH);
+	dc.DrawRectangle(wxPoint(dcOffsetX - 1, dcOffsetY - 1), wxSize(w + 2, h + 2));
 	return;
 }
 
@@ -149,11 +159,13 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 
 	if(!DateiEndung.CmpNoCase(wxT("jpg")) || !DateiEndung.CmpNoCase(wxT("jpeg")))
 	{
+		imgTemplate.Destroy();
 		imgTemplate.LoadFile(Pfad, wxBITMAP_TYPE_JPEG);
 		SetStatusText(wxString::Format(wxT("JPEG geöffnet: %s"), Pfad));
 	}else
 	if(!DateiEndung.CmpNoCase(wxT("png")))
 	{
+		imgTemplate.Destroy();
 		imgTemplate.LoadFile(Pfad, wxBITMAP_TYPE_PNG);
 		SetStatusText(wxString::Format(wxT("PNG geöffnet: %s"), Pfad));
 	}else{
@@ -161,27 +173,46 @@ void MainFrame::OnOpenTemplate(wxCommandEvent &event)
 		return;
 	}
 	
-	if(imgTemplate.GetHeight() < 3)
-		return;
-	
-	imgCanvas.Destroy();
-	imgCanvas = wxImage(canvasX, canvasY, true);
-	wxColor bgCol = wxClientDC(this).GetBackground().GetColour();
-	imgCanvas.SetRGB(wxRect(0, 0, imgCanvas.GetWidth(), imgCanvas.GetHeight()), bgCol.GetRed(), bgCol.GetGreen(), bgCol.GetBlue());
-	
 	if (m_tiles) {
 		deleteTiles(&m_tiles);
 		m_tiles = NULL;
 	}
 	unsigned char* templateData = imgTemplate.GetData();
-	unsigned char* canvasData = imgCanvas.GetData();
-	
+
 	initTiles(&m_tiles, &maxTiles, templateData, imgTemplate.GetWidth(), imgTemplate.GetHeight());
 	if (c != NULL) {
 		deleteCells(&c);
-		printf("Cells = %p\n", (void*)c);
 	}
+	return;
+}
+
+void MainFrame::CollapsWaveFunction(void)
+{
+	if (thState.finished != 1) {
+		if (wxMessageDialog(this,
+						wxT("Thread ist noch aktiv!\nSoll neu gestartet werden?"),
+						wxT("Achtung"),
+						wxYES | wxNO).ShowModal() == wxID_YES) {
+			thState.abort = 1;
+			wxMessageDialog(this, wxT("Thread wird abgebrochen)")).ShowModal();
+			while(thState.finished != 1);
+		} else {
+			return;	
+		}
+	}
+	if (!imgTemplate.IsOk()) {
+		wxMessageDialog(this, wxT("Es ist keine Vorlage geöffnet!"), wxT("WFC Abbruch")).ShowModal();
+		return;
+	}
+	if (imgTemplate.GetHeight() < 3)
+		return;
+	imgCanvas.Destroy();
+	imgCanvas = wxImage(canvasX * 3, canvasY * 3, true);
+	wxColor bgCol = wxClientDC(this).GetBackground().GetColour();
+	imgCanvas.SetRGB(wxRect(0, 0, imgCanvas.GetWidth(), imgCanvas.GetHeight()), bgCol.GetRed(), bgCol.GetGreen(), bgCol.GetBlue());
+
 	initCells(&c, canvasX, canvasY, maxTiles);
+	unsigned char* canvasData = imgCanvas.GetData();
 	
 	thState.finished = 0;
 	thState.abort = 0;
@@ -274,6 +305,9 @@ void MainFrame::OnKeyDown(wxKeyEvent &event)
 			dcOffsetX = 0;
 			dcOffsetY = 0;
 			Refresh();
+			break;
+		case WXK_F4:
+			CollapsWaveFunction();
 			break;
 	}
 	return;

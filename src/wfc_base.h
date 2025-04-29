@@ -36,6 +36,8 @@ private:
 	void OnMouseMove(wxMouseEvent &event);
 	void OnMouseLeftDown(wxMouseEvent &event);
 	void OnKeyDown(wxKeyEvent &event);
+	
+	void CollapsWaveFunction(void);
 
 	wxImage imgTemplate, imgCanvas;
 	int canvasX, canvasY;
