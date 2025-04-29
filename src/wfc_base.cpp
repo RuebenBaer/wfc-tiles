@@ -59,7 +59,7 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	pixelScale = 3;
 	dcOffsetX = 0;
 	dcOffsetY = 0;
-	imgCanvas = wxImage(canvasX * 3, canvasY * 3, true);
+	imgCanvas = wxImage(canvasX, canvasY, true);
 	wxColor bgCol = wxClientDC(this).GetBackground().GetColour();
 	imgCanvas.SetRGB(wxRect(0, 0, imgCanvas.GetWidth(), imgCanvas.GetHeight()), bgCol.GetRed(), bgCol.GetGreen(), bgCol.GetBlue());
 	
@@ -207,7 +207,7 @@ void MainFrame::CollapsWaveFunction(void)
 	if (imgTemplate.GetHeight() < 3)
 		return;
 	imgCanvas.Destroy();
-	imgCanvas = wxImage(canvasX * 3, canvasY * 3, true);
+	imgCanvas = wxImage(canvasX, canvasY, true);
 	wxColor bgCol = wxClientDC(this).GetBackground().GetColour();
 	imgCanvas.SetRGB(wxRect(0, 0, imgCanvas.GetWidth(), imgCanvas.GetHeight()), bgCol.GetRed(), bgCol.GetGreen(), bgCol.GetBlue());
 
