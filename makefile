@@ -15,7 +15,8 @@ INCLUDES =  \
 
 DEFS =  \
 	-D__WXMSW__ \
-	-DwxUSE_UNICODE
+	-D_UNICODE \
+	-DNDEBUG
 
 LIBS = \
 	-lkernel32 \
