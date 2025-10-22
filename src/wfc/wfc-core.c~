@@ -12,7 +12,7 @@ void reduceNeighbours(cell *c, int_q_lnk *queue, int sizeX, int sizeY, tile **ls
 int selectCellToCollapse(cell *c, int *x, int *y, int sizeX, int sizeY);
 void selectRandomTile(cell *c, int *tileNmb);
 
-size_t wfcRandom;
+size_t random;
 
 /* for debugging, remove later */
 void printAllCells(cell *c, int sizeX, int sizeY);
@@ -198,7 +198,7 @@ void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsign
 	tile curTile;
 	
 	srand(time(0));
-	wfcRandom = rand();
+	random = rand();
 	
 	do {
 		if (state->abort == 1) {/* request for abort */
@@ -266,9 +266,9 @@ int selectCellToCollapse(cell *c, int *x, int *y, int sizeX, int sizeY)
 	if (cellsQueued == 0) {
 		return 0;
 	}
-	srand(wfcRandom);
-	wfcRandom = rand();
-	int pickedCell = wfcRandom % cellsQueued + 1;
+	srand(random);
+	random = rand();
+	int pickedCell = random % cellsQueued + 1;
 
 	while (pickedCell > 0) {
 		pop_head_int_q(x, y, queue);
@@ -290,7 +290,7 @@ void selectRandomTile(cell *c, int *tileNmb)
 	if (c->entropy == 0) {
 		return;
 	}
-	int pick = wfcRandom = rand();
+	int pick = random = rand();
 	pick = pick % c->entropy;
 	
 	for (int opt = 0; opt < c->maxOptions; opt++) {

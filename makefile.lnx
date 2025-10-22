@@ -1,0 +1,35 @@
+CXX = g++
+CC = gcc 
+CPPFLAGS = \
+	-Wall \
+	-O2 \
+	-g
+
+OBJDIR = obj
+SRCDIR = src
+BINDIR = bin
+DIRSTOMAKE = wfc
+BIN = wfc
+OBJ = \
+	$(OBJDIR)/wfc_base.o \
+	$(OBJDIR)/queue.o \
+	$(OBJDIR)/wfc/wfc-core.o
+
+.PHONY: clean all
+
+all: $(OBJ)
+	$(CXX) $(CPPFLAGS) $(DEFS) -o $(BIN) $(OBJ) `wx-config --libs`
+
+$(OBJDIR)/wfc_base.o: $(SRCDIR)/wfc_base.cpp $(SRCDIR)/wfc_base.h
+	$(CXX) $(CPPFLAGS) -c $< -o $@ `wx-config --cxxflags`
+	
+$(OBJDIR)/queue.o: $(SRCDIR)/queue.c
+	$(CC) -c $< -o $@
+
+$(OBJDIR)/wfc/wfc-core.o: $(SRCDIR)/wfc/wfc-core.c $(SRCDIR)/wfc/wfc-core.h
+	$(CC) -c $< -o $@
+
+clean:
+	rm -f $(BIN)
+	rm $(OBJDIR)/*
+	rmdir  $(OBJDIR)

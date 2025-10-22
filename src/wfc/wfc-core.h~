@@ -36,8 +36,8 @@ typedef struct thread_state {
 }threadState;
 
 /*extern void tileRotate(bool clockWise=true);
-extern void tileFlip(bool horizontal=true);
-bool tileComp(tile*);*/
+extern void tileFlip(bool horizontal=true);*/
+bool tileComp(tile*);
 extern void collapseGrid(cell *c, int sizeX, int sizeY, tile **t, int *maxTiles, unsigned char *canvasData, int canvasWidth, int canvasHeight, threadState *state);
 extern void initTiles(tile **t, int *maxTiles, unsigned char *picData, int imgWidth, int imgHeight);
 extern void deleteTiles(tile **t);

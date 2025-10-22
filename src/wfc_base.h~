@@ -34,7 +34,7 @@ public:
 	MainFrame(const wxString &title, const wxPoint &pos, const wxSize &size);
 	~MainFrame();
 	
-private:
+private
 	void OnQuit(wxCommandEvent &event);
 	void OnSize(wxSizeEvent &event);
 	void OnPaint(wxPaintEvent &event);

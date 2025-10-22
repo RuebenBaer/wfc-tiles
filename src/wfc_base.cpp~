@@ -95,7 +95,6 @@ MainFrame::MainFrame(const wxString &title, const wxPoint &pos, const wxSize &si
 	imgCanvas.SetRGB(wxRect(0, 0, imgCanvas.GetWidth(), imgCanvas.GetHeight()), bgCol.GetRed(), bgCol.GetGreen(), bgCol.GetBlue());
 	
 	c = NULL;
-	m_tiles = NULL;
 	
 	TIMERTICK = 200;
 		
